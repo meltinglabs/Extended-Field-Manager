@@ -1,0 +1,124 @@
+/*** Layout ***/
+#panel-menu-settings{
+	clear: both;
+    content: ".";
+    display: block;
+    height: 0;
+	margin-left: 450px;
+}
+#left-side-form-column{
+	clear: both;
+    display: inline;
+    float: left;
+    margin-left: -450px;
+    width: 431px;
+}
+#right-side-liquid{
+	float: left;
+    min-width: 100%;
+}
+#right-side-liquid .inside {
+    margin: 0;
+    padding: 0;
+}
+#right-side-liquid .main {
+    background-color: white;
+}
+#right-side-liquid .main .label {
+    margin-right: 5px;
+}
+
+/*** Form style ***/
+div.form_block:first-child{
+	margin-top: 15px;
+}
+div.form_block{
+	margin-bottom: 15px;
+}
+div.form_block label,
+div.form_block .description{
+	display: block;
+	padding: 2px;
+}
+div.form_block label .required{
+	color: red;
+}
+div.form_block textarea,
+div.form_block input[type="text"], 
+div.form_block input[type="password"],  
+div.form_block input[type="email"], 
+div.form_block input[type="number"], 
+div.form_block input[type="tel"], 
+div.form_block input[type="url"], 
+div.form_block select { width: 100%; }
+
+/*** Drag & Drop ***/
+ul.sortable{ margin: 2px 0; }
+ul.sortable li .menu-item-handle{
+    line-height: 1;
+    margin-bottom: 12px;
+    padding: 12px;
+	width: auto;
+}
+.drag-up-and-down{
+	background: url("../images/drag-up-and-down.png") no-repeat scroll 0 0 transparent;
+    color: #555;
+    display: inline-block;
+    font-weight: bold;
+    height: 13px;
+    padding: 0 5px 0 18px;
+    width: 10px;
+	word-wrap: normal;
+}
+ul.sortable li:hover .drag-up-and-down{
+	background-position: 0 -13px;
+	color: #333;
+}
+.item-desc{}
+.item-controls{
+	line-height: 35px;
+    top: 0;
+}
+ul.sortable li .menu-item-settings{ display: none; }
+.menu-item-settings{
+	border-color: #DFDFDF;
+    clear: both;
+    line-height: 15px;
+    padding: 0;
+    width: auto;
+}
+.menu-item-settings p{
+	color: #888;
+	margin: 0.4em 0;
+}
+.menu-item-settings strong{
+	margin-right: 10px;
+}
+.menu-item-settings .misc-pub-section:last-child{
+	border-bottom: 0 none;
+	padding: 10px 10px 12px;
+}
+ul.sortable li.menu-item-edit-active .menu-item-handle{
+	margin-bottom: 0;
+}
+.menu-item-edit-active{ margin-bottom: 12px; }
+ul.sortable li:last-child,
+ul.sortable li:last-child .menu-item-handle{ margin-bottom: 0; }
+ul.sortable .highlight-drop{
+	height: 35px;
+	background-color: #FFFFE0;
+    border: 1px solid #E6DB55;
+}
+ul.sortable .ui-sortable-helper {
+    background: none repeat scroll 0 0 transparent;
+    border: 0 none;
+}
+a.delete{
+	border-bottom-color: #FF0000;
+    color: #FF0000;
+}
+/* We still need to override some default wp admin styles */
+.nav-menus-php .meta-sep{
+	display: inline;
+	float: none;
+}
