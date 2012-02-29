@@ -1,6 +1,6 @@
 <?php 
 /**
- * Post Types Manager
+ * Post Types Manager 
  *
  * Copyright 2006-2012 by lossendae.
  *
@@ -37,7 +37,9 @@ class PanelsPage extends PageController {
 		// $wpdb->print_error();
 		// echo '<pre>'. print_r($this->panel, true) .'</pre>';
 	}
-
+	
+	public function loadAssets(){}
+	
 	public function getTitle(){
 		return 'Panels Manager <a class="add-new-h2" href="'. $this->getUrl( array( 'action' => 'createpanel' ) ) .'">Add New</a>';
 	}

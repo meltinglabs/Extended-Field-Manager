@@ -28,7 +28,7 @@
  * @subpackage controllers
  */
 class EFMAdminController {
-	protected $subPage = null;
+	public $page = null;
 	
 	/**
      * The Plugin Manager Constructor.
@@ -39,13 +39,16 @@ class EFMAdminController {
      */
     function __construct() {
 		/*** Load the administration panel menus ***/
-		add_action('admin_menu', array(&$this,'loadAdminMenu'));
+		add_action('admin_menu', array( &$this, 'loadAdminMenu' ));
 					
 		/*** nullify any existing autoloads ***/
 		spl_autoload_register(null, false);
 		
 		/*** specify extensions that may be loaded ***/
-		spl_autoload_extensions('.php, .class.php');			
+		spl_autoload_extensions('.php, .class.php');	
+
+		/*** Handle ajax request ***/
+		add_action('wp_ajax_efmrequest', array( $this, 'handleAjaxRequest' ));
 	}
 	
 	/**
@@ -79,6 +82,24 @@ class EFMAdminController {
 			}
 			include $file;
 		}
+		return true;
+	}
+	
+	public function loadFieldController($field){
+		$base = EFM_CORE_PATH . 'field.class.php';
+		if( !file_exists($base) ){
+			return false;
+		}
+		$filename = $field . '.class.php';
+		$file = EFM_FIELDS_PATH . $field .'/' . $filename;
+		
+		if( !file_exists($file) ){
+			return false;
+		}
+		
+		include $base;
+		include $file;
+		return true;
 	}
 	
 	/**
@@ -96,7 +117,7 @@ class EFMAdminController {
 		
 		/*** Load the full admin css only when on plugin managing pages ***/
 		foreach($pluginPages as $key => $page){
-			add_action('admin_head-'. $page, array(&$this, 'loadAssets'));
+			add_action('admin_head-'. $page, array(&$this, 'loadAssets'), $page);
 		}		
 	}
 	
@@ -107,11 +128,11 @@ class EFMAdminController {
      *
 	 * @access public
      */
-	public function loadAssets(){		
-		echo '<link rel="stylesheet" href="'. EFM_CSS_URL . 'style.css" type="text/css" charset="utf-8" />';
-		
-		wp_enqueue_script( 'jquery-ui-sortable' );
-		wp_enqueue_script( 'sort_fields', EFM_JS_URL . 'sortfields.js', array(), false, true );
+	public function loadAssets($er){		
+		echo '<link rel="stylesheet" href="'. EFM_CSS_URL . 'style.css" type="text/css" charset="utf-8" />';		
+		if($this->load('assets')){
+			$this->page->loadAssets();
+		}
 	}
 	
 	/**
@@ -122,7 +143,7 @@ class EFMAdminController {
 	 * @access public
 	 * @return string The processed content || && error message if any
      */
-	public function load(){
+	public function load($render = true){
 		$this->classFilename = str_replace( EFM_PREFIX, '', $_GET['page'] );
 		$className = ucfirst( $this->classFilename ) . 'Page';
 		
@@ -134,19 +155,28 @@ class EFMAdminController {
 		}
 		
 		/*** register the page loader method ***/
-		spl_autoload_register( array( &$this, 'loadPageController' ) );	
+		spl_autoload_register( array( &$this, 'loadPageController' ) );			
 		
-		
-		$page = new $className();
-		if( !$page instanceof PageController ){
-			return $this->render(
-				'Uh Oh !', 
-				'<div class="error below-h2" id="notice"><p>All Pages have to extend the PageController abstract class.</p></div>'
-			);			
-		}
-		
-		return $this->render($page->getTitle(), $page->getContent(), $page->icon);
-	}
+		$this->page = new $className();
+		switch($render){
+			case 'assets':
+				if( !$this->page instanceof PageController ){
+					return false;
+				}
+				return true;
+				break;
+			default:
+				if( !$this->page instanceof PageController ){
+					return $this->render(
+						'Uh Oh !', 
+						'<div class="error below-h2" id="notice"><p>All Pages have to extend the PageController abstract class.</p></div>'
+					);	
+				}
+				$this->page->setController($this);
+				return $this->render($this->page->getTitle(), $this->page->getContent(), $this->page->icon);
+				break;
+		}		
+	}	
 	
 	/**
      * render
@@ -159,7 +189,7 @@ class EFMAdminController {
 	 * @param string $icon - The page icon to use (optionnal - default : null)
 	 * @return string The processed content || && error message if any
      */
-	public function render($title, $content, $icon =  null){
+	public function render($title, $content, $icon =  null){	
 		?>
 			<div id="admin" class="wrap">
 				<?php if($icon !== null): ?>
@@ -169,5 +199,18 @@ class EFMAdminController {
 				<?php echo $content; ?>
 			</div>
 		<?php
+	}
+	
+	public function handleAjaxRequest(){
+		$name = $_POST['value'];
+		$class = $this->loadFieldController($name);
+		if(!$class){			
+			echo 'Could not load Field Class :'. $name .'Field';
+		} else {
+			$className = ucfirst($name) .'Field';
+			$this->field = new $className();
+			echo $this->field->getSetupOtions();
+		}		
+		die();
 	}
 }

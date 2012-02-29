@@ -69,7 +69,6 @@ class EFMInstaller {
 				`id` mediumint(9) NOT NULL AUTO_INCREMENT,			
 				`name` varchar(50) NOT NULL,
 				`label` varchar(50) NOT NULL,
-				`fields_order` text,
 				PRIMARY KEY (`id`),
 				KEY `name` (`name`)	)'
 			);
@@ -82,13 +81,17 @@ class EFMInstaller {
 				`name` varchar(50) NOT NULL,
 				`label` varchar(50) NOT NULL,
 				`description` text,
-				`panel_id` mediumint(9) NOT NULL,
 				`type` varchar(20) NOT NULL,
 				`required` tinyint(1) DEFAULT 0,
 				`duplicable` tinyint(1) DEFAULT 0,
 				`options` text,
+				`owner` varchar(20) NOT NULL DEFAULT "panel",
+				`owner_id` mediumint(9) NOT NULL,
+				`display_order` mediumint(9) NOT NULL,
 				PRIMARY KEY (`id`),
-				KEY `panel_id` (`panel_id`),
+				KEY `owner` (`owner`),
+				KEY `owner_id` (`owner_id`),
+				KEY `display_order` (`display_order`),
 				KEY `name` (`name`)	)'
 			);
 		}

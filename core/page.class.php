@@ -1,6 +1,6 @@
 <?php 
 /**
- * PageController
+ * PageController 
  *
  * Copyright 2006-2012 by lossendae.
  *
@@ -33,6 +33,12 @@ abstract class PageController {
      * @access public
      * @var title - The panel title.
      */
+    public $controller = null;
+	
+	/**
+     * @access public
+     * @var title - The panel title.
+     */
     public $title = 'My Sites Variable - Panel Default Title';
 	
 	/**
@@ -40,15 +46,25 @@ abstract class PageController {
      * @var icon - The panel icon to show on the left of the panel title
      */
 	public $icon = 'icon-options-general';
+	
+	/**
+     * @access public
+     * @var errors - Errors to show below the page title if any
+     */
+	public $errors = array();
 
 	/**
-     * The Plugin Panel Constructor.
+     * The Page Constructor.
      *
-     * This method is used to create a new PluginPanel object.
+     * This method is used to create a new PageController object.
      *
-     * @return PluginPanel A unique PluginManager instance.
+     * @return PageController A unique PageController instance.
      */
     function __construct() {}
+	
+	function setController(EFMAdminController &$controller){
+		$this->controller = &$controller;
+	}
 		
 	public function getUrl( $args = array() ){
 		$params = array_merge(array(
@@ -61,8 +77,38 @@ abstract class PageController {
 	public function getTitle(){
 		return $this->title;
 	}
+	
 	public function getIcon(){
 		return $this->icon;
+	}
+	
+	public function loadAssets(){
+		return true;
+	}
+	
+	public function addError($error){
+		array_push($this->errors, $error);
+	}
+	
+	public function showErrors(){
+		?>
+			<div class="error below-h2" id="notice">
+				<p>Please fix the following errors:</p>
+				<ul class="ul-disc">
+				<?php foreach( $this->errors as $error ): ?>
+					<li><?php echo $error['message']; ?></li>
+				<?php endforeach; ?>
+				</ul>						
+			</div>
+		<?php
+	}
+	
+	public function showSucessMessage($message){
+		?>
+			<div class="updated below-h2">
+				<p><?php echo $message; ?></p>					
+			</div>
+		<?php
 	}
 	
 	abstract public function getPageKey();	

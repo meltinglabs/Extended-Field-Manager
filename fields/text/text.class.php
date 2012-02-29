@@ -1,6 +1,6 @@
 <?php 
 /**
- * ManagepanelsPage
+ * Field
  *
  * Copyright 2006-2012 by lossendae.
  *
@@ -21,20 +21,31 @@
  * @package efm
  */
 /**
- * Manage panels attached to this post type
+ * Field
+ * 
+ * All custom fields have to extend this class
  *
  * @package efm
  * @subpackage controllers
- * @extend PosttypesPage
  */
-class ManagepanelsPage extends PosttypesPage {
-	public $title = 'Edit Panels for Post Type :';
-	
-	public function getContent(){
+class TextField extends Field {
+	public $options = array();
+	public function getSetupOtions(){
 		ob_start();
 		?>
-			Testing sub page
+			<p>A simple text field input</p>
+			<div class="field_display_preview centered">
+				<img src="<?php echo EFM_URL . 'fields/text/preview.jpg' ?>" alt="Text field diplay preview"/>
+			</div>
+			<div class="form_block">
+				<label for="field_default_value">
+					Default Value					
+				</label>
+				<input type="text" name="options[default_value]" id="field_default_value" value="<?php echo $this->getOption('default_value') ?>"/>	
+				<span class="description">Default value to instanciate the field with</span>					
+			</div>
 		<?php
 		return ob_get_clean();
 	}	
+	public function displayField(){}
 }

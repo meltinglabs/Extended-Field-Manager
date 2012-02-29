@@ -17,23 +17,36 @@
 	float: left;
     min-width: 100%;
 }
+#left-side .inside,
 #right-side-liquid .inside {
     margin: 0;
     padding: 0;
 }
-#right-side-liquid .main {
+#left-side .inside .misc-pub-section:last-child,
+#right-side-liquid .inside .misc-pub-section:last-child{
+    border-bottom: 0 none;
+}
+.main {
     background-color: white;
 }
-#right-side-liquid .main .label {
+.main .label {
     margin-right: 5px;
 }
+.assigned,
+.available{ min-height: 62px; }
 
 /*** Form style ***/
 div.form_block:first-child{
 	margin-top: 15px;
 }
+div.misc-pub-section.form_block:first-child{
+	margin-top: 0;
+}
 div.form_block{
 	margin-bottom: 15px;
+}
+div.misc-pub-section.form_block{
+	margin-bottom: 0;
 }
 div.form_block label,
 div.form_block .description{
@@ -53,72 +66,88 @@ div.form_block input[type="url"],
 div.form_block select { width: 100%; }
 
 /*** Drag & Drop ***/
-ul.sortable{ margin: 2px 0; }
-ul.sortable li .menu-item-handle{
+ul.field{ 
+	margin: 2px 0; 
+	min-height: 50px;
+	width: 100%;
+}
+ul.field li.menu-item-handle{
     line-height: 1;
     margin-bottom: 12px;
-    padding: 12px;
-	width: auto;
+    padding: 10px 14px 14px;
+    width: auto;
 }
-.drag-up-and-down{
+#assigned {   }
+
+ul.field li .drag-icon{
 	background: url("../images/drag-up-and-down.png") no-repeat scroll 0 0 transparent;
-    color: #555;
-    display: inline-block;
-    font-weight: bold;
     height: 13px;
-    padding: 0 5px 0 18px;
+    padding: 0;
+    position: absolute;
+    top: 14px;
     width: 10px;
-	word-wrap: normal;
 }
-ul.sortable li:hover .drag-up-and-down{
+ul.field li:hover .drag-icon{
 	background-position: 0 -13px;
 	color: #333;
 }
-.item-desc{}
-.item-controls{
-	line-height: 35px;
-    top: 0;
+ul.field .field-label{
+	color: #555555;
+    font-weight: bold;
+    line-height: 18px;
+    margin: 0 0 0 22px;
 }
-ul.sortable li .menu-item-settings{ display: none; }
-.menu-item-settings{
-	border-color: #DFDFDF;
-    clear: both;
-    line-height: 15px;
-    padding: 0;
-    width: auto;
+ul.field .item-desc{ margin: 2px 0 0 22px; }
+ul.field .field-name{ margin: 0 20px 0 0; }
+ul.field .field-name,
+ul.field .field-type{
+	color: #A0A0A0;
+    font-size: 11px;
 }
-.menu-item-settings p{
-	color: #888;
-	margin: 0.4em 0;
+ul.field .field-name span,
+ul.field .field-type span{ color: #777777; }
+ul.field .field-name:after{
+	border-radius: 3px 3px 3px 3px;
+	-webkit-border-radius: 3px 3px 3px 3px;
+	-moz-border-radius: 3px 3px 3px 3px;
+	background-color: #A0A0A0;
+    content: "";
+    display: inline-block;
+    height: 5px;
+    margin: 5px 10px 0;
+    position: absolute;
+    width: 5px;
 }
-.menu-item-settings strong{
-	margin-right: 10px;
+ul.field .item-actions{
+	display: none;
+    font-size: 9px;
+    line-height: 12px;
+    margin: 0 0 0 5px;
+    text-transform: uppercase;
+    vertical-align: middle;
 }
-.menu-item-settings .misc-pub-section:last-child{
-	border-bottom: 0 none;
-	padding: 10px 10px 12px;
-}
-ul.sortable li.menu-item-edit-active .menu-item-handle{
-	margin-bottom: 0;
-}
-.menu-item-edit-active{ margin-bottom: 12px; }
-ul.sortable li:last-child,
-ul.sortable li:last-child .menu-item-handle{ margin-bottom: 0; }
+ul.field .item-actions a{ text-decoration: none; }
+ul.field li:hover .item-actions{ display: inline; }
+ul.field li:last-child,
+ul.field li:last-child .menu-item-handle{ margin-bottom: 0; }
 ul.sortable .highlight-drop{
-	height: 35px;
+	height: 56px;
 	background-color: #FFFFE0;
     border: 1px solid #E6DB55;
 }
-ul.sortable .ui-sortable-helper {
-    background: none repeat scroll 0 0 transparent;
-    border: 0 none;
-}
-a.delete{
-	border-bottom-color: #FF0000;
-    color: #FF0000;
-}
+
 /* We still need to override some default wp admin styles */
 .nav-menus-php .meta-sep{
 	display: inline;
 	float: none;
+}
+
+/* Field */
+.field_display_preview{ margin-top: 18px; }
+
+/* Common */
+.centered{ text-align: center; }
+a.delete{
+	border-bottom-color: #FF0000;
+    color: #FF0000;
 }

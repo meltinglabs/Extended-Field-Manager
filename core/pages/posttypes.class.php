@@ -18,7 +18,7 @@
  * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
  * Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * @package efm
+ * @package efm 
  */
  /**
  * List all Post Types, enven those who are not registered but do contains some groups assigned to them in the db.
@@ -82,7 +82,7 @@ class PosttypesPage extends PageController {
 						<strong><?php echo $postType->label; ?></strong>
 						<div class="row-actions">
 							<span class="edit">
-								<a title="Edit Panels" href="<?php echo $this->getUrl( array( 'action' => 'managepanels' ) ) ?>">Edit Panels</a>
+								<a title="Edit Panels" href="<?php echo $this->getUrl( array( 'action' => 'managepanels', 'slug' => $postType->name ) ) ?>">Edit Panels</a>
 							</span>
 						</div>
 					</td>

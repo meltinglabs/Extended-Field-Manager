@@ -36,6 +36,7 @@ define('EFM_DB_PANELS', $wpdb->prefix . EFM_PREFIX . 'panels');
 define('EFM_DB_FIELDS', $wpdb->prefix . EFM_PREFIX . 'fields'); 
 define('EFM_CORE_PATH', dirname(__FILE__) .'/core/'); 
 define('EFM_PAGES_PATH', dirname(__FILE__) .'/core/pages/'); 
+define('EFM_FIELDS_PATH', dirname(__FILE__) .'/fields/'); 
 
 define('EFM_BASENAME', plugins_url() .'/'. str_replace( basename(__FILE__), "", plugin_basename(__FILE__) ) );
 define('EFM_URL', EFM_BASENAME);

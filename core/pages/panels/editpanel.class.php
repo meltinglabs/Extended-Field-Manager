@@ -1,7 +1,7 @@
 <?php 
 /**
  * EditpanelPage
- *
+ * 
  * Copyright 2006-2012 by lossendae.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -39,7 +39,7 @@ class EditpanelPage extends PanelsPage {
 		
 		$this->panel = $this->db->get_row( $this->db->prepare(
 			"SELECT * FROM ". EFM_DB_PANELS ." WHERE id = %u"
-		, $_GET['id'] ));
+		,$_GET['id'] ));
 		
 		if( empty( $this->panel ) ){
 			wp_safe_redirect( $this->getUrl() );
@@ -48,232 +48,160 @@ class EditpanelPage extends PanelsPage {
 		// $wpdb->print_error();
 		// echo '<pre>'. print_r($this->panel, true) .'</pre>';
 	}
+		
+	public function loadAssets(){
+		wp_enqueue_script( 'jquery-ui-sortable' );
+		wp_enqueue_script( 'editpanel', EFM_JS_URL . 'editpanel.js', array(), false, true );
+	}
 	
 	public function getTitle(){		
 		return 'Editing Panel : '. $this->panel->label;
 	}
 	
-	public function getContent(){
+	public function getContent(){			
+		if(isset($_POST['submit'])){
+			unset($_POST['submit']);
+			// $this->setFields($_POST);
+			// $this->checkForm();
+			if( empty( $this->errors ) ){
+				/* @TODO : CHANGE THAT */
+				$this->save($_POST);
+			}
+		}
 			
-	
-			ob_start();
-			?>
-				<?php if( isset( $_POST['submit'] ) ): ?>
-						<pre><?php// echo print_r($_POST, true); ?></pre>
-						<?php
-							$this->save($_POST);						
-						?>
-				<?php endif; ?>
-				
-				<?php if( !empty( $this->errors ) ): ?>
-					<div class="error below-h2" id="notice">
-						<p>Please fix the following errors:</p>
-						<ul class="ul-disc">
-						<?php foreach( $this->errors as $error ): ?>
-							<li><?php echo $error; ?></li>
-						<?php endforeach; ?>
-						</ul>						
-					</div>
-				<?php endif; ?>
-				
-				<form id="panel-menu-settings" action="<?php $this->getUrl( array( 'action' => 'editpanel' ) ) ?>" method="post">
-					<input name="id" type="hidden" value="<?php echo $this->panel->id; ?>"/>
-					<div id="left-side-form-column">
-													
-						<div class="form_block">
-							<label for="name">
-								Name
-								<span class="required">*</span>
-							</label>
-							<input id="name" name="name" type="text" value="<?php echo $this->panel->name; ?>"/>
-							<span class="description">
-								Le nom du panel qui sera utilisé pour trier vos champs.<br/>
-								Les espaces et majuscules ne sont pas acceptés.
-							</span>
-						</div>
-					
-						<div class="form_block">
-							<label for="label">
-								Label
-								<span class="required">*</span>
-							</label>
-							<input id="label" name="label" type="text" value="<?php echo $this->panel->label; ?>"/>
-							<span class="description">Le texte qui sera placé dans la barre de titre</span>
-						</div>
-										
-						<p class="submit">
-							<a class="button" href="<?php $this->getUrl() ?>">Cancel</a>
-							<a class="button" href="<?php $this->getUrl() ?>">Duplicate</a>
-							<input type="submit" value="Save Changes" class="button-primary" id="submit" name="submit">
-						</p>
-												
-					</div>
-					<!-- End #left-side-form-column -->
-					
-					<div id="right-side-liquid" class="metabox-holder nav-menus-php">
-						<div class="postbox">
-							<h3 class="hndle"><span>About this Panel</span></h3>
-							<div class="inside">
-							
-								<div class="misc-pub-section">
-									<p>A group allows us to group a series of custom fields and to have a better managing of the custom fields</p>
-									<p>The groups have the great usefulness of which it is possible to duplicate, this is, one creates new instance of the group (with all the custom fields that the group contains)</p>
-								</div>
-								
-								<div class="misc-pub-section main">
-									<p>
-										<strong class="label">Assigned Fields</strong> 
-										<a class="button" href="<?php $this->getUrl() ?>">Add Field</a>
-									</p>
-									
-									<ul class="sortable">									
-										<li>
-											<div class="menu-item-handle">
-												<div class="item-desc">
-													<span class="drag-up-and-down">Field</span>													
-												</div>
-												<span class="item-controls">
-													<span class="item-type">text</span>
-													<a href="#" class="item-edit">Text</a>
-												</span>
-												<input name="fields_order[]" type="hidden" value="1"/>
-											</div>
-											
-											<div class="menu-item-settings">												
-												<div class="misc-pub-section">
-													<p><strong>Description :</strong><em>A simple description of the field</em></p>
-												</div>
-												<div class="misc-pub-section">
-													<p><strong>Name :</strong><em>field</em></p>
-												</div>
-												<div class="misc-pub-section">
-													<a href="#" id="remove-19" class="delete">Remove</a>
-													<span class="meta-sep"> | </span>
-													<a href="#" id="cancel-19" class="item-cancel">Edit</a>
-												</div>
-											</div>											
-										</li>
-										
-										<li>
-											<div class="menu-item-handle">
-												<div class="item-desc">
-													<span class="drag-up-and-down">Field</span>																
-												</div>
-												<span class="item-controls">
-													<a href="#" class="item-edit">Text</a>
-												</span>
-												<input name="fields_order[]" type="hidden" value="2"/>
-											</div>
-											
-											<div class="menu-item-settings">												
-												<div class="misc-pub-section">
-													<p><strong>Description :</strong><em>A simple description of the field</em></p>
-												</div>
-												<div class="misc-pub-section">
-													<p><strong>Name :</strong><em>field</em></p>
-												</div>
-												<div class="misc-pub-section">
-													<a href="#" id="remove-19" class="delete">Remove</a>
-													<span class="meta-sep"> | </span>
-													<a href="#" id="cancel-19" class="item-cancel">Edit</a>
-												</div>
-											</div>
-										</li>	
-										
-										<li>
-											<div class="menu-item-handle">
-												<div class="item-desc">
-													<span class="drag-up-and-down">Field</span>																
-												</div>
-												<span class="item-controls">
-													<a href="#" class="item-edit">Text</a>
-												</span>
-												<input name="fields_order[]" type="hidden" value="4"/>
-											</div>
-											
-											<div class="menu-item-settings">												
-												<div class="misc-pub-section">
-													<p><strong>Description :</strong><em>A simple description of the field</em></p>
-												</div>
-												<div class="misc-pub-section">
-													<p><strong>Name :</strong><em>field</em></p>
-												</div>
-												<div class="misc-pub-section">
-													<a href="#" id="remove-19" class="delete">Remove</a>
-													<span class="meta-sep"> | </span>
-													<a href="#" id="cancel-19" class="item-cancel">Edit</a>
-												</div>
-											</div>
-										</li>
-										
-										<li>
-											<div class="menu-item-handle">
-												<div class="item-desc">
-													<span class="drag-up-and-down">Field</span>																
-												</div>
-												<span class="item-controls">
-													<a href="#" class="item-edit">Text</a>
-												</span>
-												<input name="fields_order[]" type="hidden" value="3"/>
-											</div>
-											
-											<div class="menu-item-settings">												
-												<div class="misc-pub-section">
-													<p><strong>Description :</strong><em>A simple description of the field</em></p>
-												</div>
-												<div class="misc-pub-section">
-													<p><strong>Name :</strong><em>field</em></p>
-												</div>
-												<div class="misc-pub-section">
-													<a href="#" id="remove-19" class="delete">Remove</a>
-													<span class="meta-sep"> | </span>
-													<a href="#" id="cancel-19" class="item-cancel">Edit</a>
-												</div>
-											</div>
-										</li>										
-									</ul>
-								</div>
-								
-							</div>
-						</div>
-					</div>
-					<!-- End #right-side-liquid -->
-					
-				</form>
-				<!-- End #panel-menu-settings -->				
-			<?php
-			return ob_get_clean();
+		ob_start();
+		if( !empty( $this->errors ) ) { $this->showErrors(); }
+		?>
+			<form id="panel-menu-settings" action="<?php echo $this->getUrl( array( 'action' => 'editpanel' ) ) ?>" method="post">
+				<input name="id" type="hidden" value="<?php echo $this->panel->id; ?>"/>
+				<?php $this->getLeftSide() ?>						
+				<?php $this->getRightSide() ?>						
+			</form>
+		<?php
+		return ob_get_clean();
 	}
 	
-	public function checkForm( $data ){		
-		$query = sprintf("SELECT * FROM %s WHERE name = '%s'", EFM_DB_PANELS, $data['name']);
-		$exist = $this->db->get_results($query, ARRAY_A);
-		if( !empty( $exist ) ){ $this->addError('This name is already taken, please choose another one'); }
+	public function getLeftSide(){
+		?>						
+			<div id="left-side-form-column">											
+				<div class="form_block">
+					<label for="name">
+						Name
+						<span class="required">*</span>
+					</label>
+					<input id="name" name="name" type="text" value="<?php echo $this->panel->name; ?>"/>
+					<span class="description">
+						Method name used as prefix to retreive fields, therefore spaces and uppercased chars are not allowed.<br/>
+						Once the field created, this value cannot be changed.
+					</span>
+				</div>
+			
+				<div class="form_block">
+					<label for="label">
+						Label
+						<span class="required">*</span>
+					</label>
+					<input id="label" name="label" type="text" value="<?php echo $this->panel->label; ?>"/>
+					<span class="description">Text used as Panel header</span>
+				</div>
+								
+				<p class="submit">
+					<a class="button" href="<?php echo $this->getUrl() ?>">Cancel</a>
+					<a class="button" href="<?php echo $this->getUrl() ?>">Copy</a>
+					<input type="submit" value="Save Panel" class="button-primary" id="submit" name="submit">
+				</p>										
+			</div>
+			<!-- End #left-side-form-column -->				
+		<?php
 	}
-
-	public function createPanel( $data ){  
-		$sql = sprintf(
-			"INSERT INTO %s ".
-			"(name,label) ".
-			"VALUES ('%s','%s')",
-			EFM_DB_PANELS,
-			$data['name'],
-			$data['label']
+	
+	public function getRightSide(){
+		$fieldAction = array(
+			'action' => 'createfield',
+			'owner' => 'panel',
+			'id' => $this->panel->id,
 		);
-		$this->db->query($sql);
-    
-		$postTypeId = $this->db->insert_id;
-		return $postTypeId;
+		?>				
+			<div id="right-side-liquid" class="metabox-holder nav-menus-php">
+				<div class="postbox">
+					<h3 class="hndle"><span>About this Panel</span></h3>
+					<div class="inside">
+					
+						<div class="misc-pub-section">
+							<p>A group allows us to group a series of custom fields and to have a better managing of the custom fields</p>
+							<p>The groups have the great usefulness of which it is possible to duplicate, this is, one creates new instance of the group (with all the custom fields that the group contains)</p>
+						</div>
+						
+						<div class="misc-pub-section main">
+							<p>
+								<strong class="label">Assigned Fields</strong> 
+								<a class="button" href="<?php echo $this->getUrl( $fieldAction ) ?>">Add Field</a>
+							</p>
+							
+							<?php echo $this->getFieldsList(); ?>
+						</div>
+						
+					</div>
+				</div>
+			</div>
+			<!-- End #right-side-liquid -->		
+		<?php
 	}
 	
-	public function addError( $text ){
-		$this->errors[] = $text;
+	public function getFieldsList(){
+		$fields = $this->db->get_results( $this->db->prepare( 
+			"SELECT id, label, type, name 
+			FROM ". EFM_DB_FIELDS ." f 
+			WHERE f.owner = 'panel' 
+			AND f.owner_id = ". $this->panel->id ."
+			ORDER BY f.display_order" 
+		));
+		$list = '';
+		if( !empty( $fields ) ){
+			$list .= '<ul class="sortable field">';
+			
+			foreach($fields as $field):
+				$editLink = array(
+					'action' => 'editfield',
+					'id' => $field->id,
+				);
+				ob_start();
+				?>
+					<li class="menu-item-handle">
+						<input name="display_order[]" type="hidden" value="<?php echo $field->id; ?>"/>
+						<span class="drag-icon">&nbsp;</span>
+						<div class="field-label">						
+							<?php echo $field->label; ?>
+							
+							<span class="item-actions">
+								<a href="#" id="remove-19" class="delete">Remove</a>
+								<span class="meta-sep"> | </span>
+								<a href="<?php echo $this->getUrl( $editLink ); ?>" id="cancel-19" class="item-cancel">Edit</a>
+							</span>
+							
+						</div>
+						<div class="item-desc">							
+							<span class="field-name">Name : <span><?php echo $field->name; ?></span></span>
+							<span class="field-type">Type : <span><?php echo $field->type; ?></span></span>									
+						</div>									
+					</li>
+				<?php
+				$list .= ob_get_clean();
+			endforeach;
+			
+			$list .= '</ul>';
+		}
+		// $this->db->show_errors();
+		// $this->db->print_error();
+		return $list;
 	}
+	
+	public function checkForm(){}
 	
 	public function save( $data ){
 		$id = $data['id'];
 		unset($data['id'], $data['submit']);
-		$data['fields_order'] = serialize($data['fields_order']);
+		// $data['fields_order'] = serialize($data['fields_order']);
 		$this->db->update( 
 			EFM_DB_PANELS, 
 			$data, 
