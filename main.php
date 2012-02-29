@@ -7,7 +7,7 @@ Version: 0.1a
 Author:  lossendae
 Author URI: http://meltinlab.com
 License: GPL2
-*/
+*/ 
 /**
  * Extended Fields Manager
  *

@@ -1,7 +1,7 @@
 <?php 
 /**
  * EditpanelPage
- * 
+ *  
  * Copyright 2006-2012 by lossendae.
  *
  * This program is free software; you can redistribute it and/or modify it under
