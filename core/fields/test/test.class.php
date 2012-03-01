@@ -1,6 +1,6 @@
 <?php 
 /**
- * Field
+ * TestField
  *
  * Copyright 2006-2012 by lossendae.
  *
@@ -21,46 +21,40 @@
  * @package efm
  */
 /**
- * Field
+ * TestField
  * 
  * All custom fields have to extend this class
  *
  * @package efm
  * @subpackage controllers
+ * @extends EFMField
  */
-abstract class Field {
-	
-	/**
-     * The Plugin Panel Constructor.
-     *
-     * This method is used to create a new PluginPanel object.
-     *
-     * @return PluginPanel A unique PluginManager instance.
-     */
-    function __construct() {}
-	
-	/**
-     * setOptions
-     *
-     * Set this fields custom options
-     *
-     * @param array $data
-     * @return PluginPanel A unique PluginManager instance.
-     */
-	public function setOptions( $options ){
-		$data = @unserialize( $options );
-		if( $options === 'b:0;' || $data !== false){
-			$this->options = $data;
-		} else {
-			$this->options = $options;
-		}	
+class TestField extends EFMField {
+	public $options = array();
+	public function getSetupOtions(){
+		ob_start();
+		?>
+			<p>A field existing only for testing purpose</p>
+			<div class="form_block">
+				<label for="field_default_value">
+					Default Value					
+				</label>
+				<input type="text" name="options[default_value]" id="field_default_value" value="<?php echo $this->getOption('default_value') ?>"/>	
+				<span class="description">A basic testing option</span>					
+			</div>
+		<?php
+		return ob_get_clean();
+	}	
+	public function displayField(){}
+	public static function getInfo( $key = null ){
+		$infos = array(
+			'name' => 'Test',
+			'type' => 'test',
+			'description' => 'A simple test field',
+		);
+		if( $key !== null ){
+			return $infos[$key];
+		}			
+		return $infos;
 	}
-	
-	public function getOption( $name ){
-		$value = !empty( $this->options ) ? $this->options[$name] : '';
-		return $value;
-	}
-	
-	abstract public function getSetupOtions();	
-	abstract public function displayField();	
 }

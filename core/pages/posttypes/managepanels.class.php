@@ -27,23 +27,26 @@
  * @subpackage controllers
  * @extend PosttypesPage
  */
-class ManagepanelsPage extends PosttypesPage {
-	public $title = 'Edit Panels for Post Type :';
+class Managepanels extends PosttypesManager {
 	
 	function __construct(){
-		global $wpdb;
-		$this->db = &$wpdb;
+		parent::__construct();
+		$this->init();
+	}
+	
+	public function init(){
 		$this->panels = $this->db->get_results( $this->db->prepare(
 			"SELECT 
 			p.id,
-			p.label,
+			p.title,
 			p.name,
 			COUNT(f.id) AS amount 
 			FROM ". EFM_DB_PANELS ." p 
 			LEFT JOIN ". EFM_DB_FIELDS ."  f
-			ON p.id = f.owner_id"
+			ON p.id = f.owner_id
+			GROUP BY p.id"
 		));
-		$this->posttype = get_post_type_object($_GET['slug']);			
+		$this->posttype = get_post_type_object( $_GET['slug'] );			
 	}
 	
 	public function loadAssets(){
@@ -52,8 +55,22 @@ class ManagepanelsPage extends PosttypesPage {
 	}
 	
 	public function setAssignedPanels(){	
-		$this->assigned = $this->db->get_row( $this->db->prepare( "SELECT * FROM ". EFM_DB_POSTTYPES ." WHERE type='". $this->posttype->name ."'" ) );
-		$this->assignedPanels = !empty( $this->assigned ) ? unserialize( $this->assigned->panels ) : array();
+		$this->assigned = $this->db->get_row( $this->db->prepare( "SELECT * FROM ". EFM_DB_OWNER ." WHERE owner='posttype' AND slug='". $this->posttype->name ."'" ) );
+		$this->assignedPanels = array();
+		if( !empty( $this->assigned ) ){
+			$panels = $this->db->get_results( $this->db->prepare(
+				'SELECT field_order, panel_id 
+				FROM '. EFM_DB_APL .'
+				WHERE owner_id = '. $this->assigned->id .'
+				ORDER BY field_order'
+			));
+			if( !empty( $panels ) ){
+				foreach( $panels as $panel ){
+					$this->assignedPanels[$panel->field_order] = $panel->panel_id;
+				}
+			}
+		}
+		
 	}
 	
 	public function getTitle(){		
@@ -62,14 +79,12 @@ class ManagepanelsPage extends PosttypesPage {
 	
 	public function getContent(){
 		$this->setAssignedPanels();
-		if(isset($_POST['submit'])){
+		if( isset( $_POST['submit'] ) ){
 			unset($_POST['submit']);
 			$this->save($_POST);
 		}
 			
 		ob_start();
-			if( !empty( $this->errors ) ) { $this->showErrors(); }
-			if( $this->success ){ $this->showSucessMessage('Change saved succesfully'); }
 			?>
 				<div id="panel-menu-settings">
 					<?php $this->getLeftSide() ?>				
@@ -110,7 +125,8 @@ class ManagepanelsPage extends PosttypesPage {
 		$this->assignedList = '';
 		$list = '';
 		if( !empty( $this->panels ) ){
-			foreach($this->panels as $panel):			
+			foreach($this->panels as $panel):
+				
 				ob_start();
 				?>
 					<li class="menu-item-handle">
@@ -170,23 +186,35 @@ class ManagepanelsPage extends PosttypesPage {
 	
 	
 	public function save( $data ){		
-		$data['panels'] = isset($data['panels']) ? serialize( $data['panels'] ) : serialize( array() );
-		
 		if( empty( $this->assigned ) ){
 			$new = array();
-			$new['type'] = $this->posttype->name;
+			$new['owner'] = 'posttype';
+			$new['slug'] = $this->posttype->name;
 			$new['built_in'] = $this->posttype->_builtin;
 			if( !$new['built_in'] ){
 				$new['arguments'] = array();				
 			}
 			$new['register'] = 0;
-			$data = array_merge($new, $data);				
-			$this->db->insert( EFM_DB_POSTTYPES, $data );
-			$this->success = true;
+			$this->db->insert( EFM_DB_OWNER, $new );
+			if( $this->db->insert_id ){
+				$owner = $this->db->insert_id;
+			}				
 		} else {
-			$this->db->update( EFM_DB_POSTTYPES, $data, array('type' => $this->assigned->type ) );	
-			$this->success = true;
+			$this->db->query( 'DELETE FROM '. EFM_DB_APL .' WHERE owner_id = '. $this->assigned->id);	
 		}
+		
+		if( !empty( $data ) && !empty( $this->assigned ) || !empty( $data ) && isset( $owner ) ){
+			foreach( $data['panels'] as $key => $value ){
+				$row = array();
+				$row['field_order'] = $key;
+				$row['owner_id'] = $this->assigned->id;
+				$row['panel_id'] = $value;
+				$this->db->insert( EFM_DB_APL, $row );
+			}
+			$message = isset( $owner ) ? 'New Panel assignement sucessfully saved' : 'Panel assignement successfully updated';
+			$this->setSuccessMessage( $message );
+		}
+			
 		// $this->db->show_errors();
 		// $this->db->print_error();
 		if( $this->success ){

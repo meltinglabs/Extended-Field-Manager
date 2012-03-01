@@ -42,7 +42,8 @@ class EFMInstaller {
 			$this->charset_collate = "DEFAULT CHARACTER SET $wpdb->charset";
 		if ( ! empty($wpdb->collate) )
 			$this->charset_collate .= " COLLATE $wpdb->collate";
-			
+		
+		
 		register_activation_hook( $file, array( &$this, 'setup' ) );
     }
 	
@@ -52,30 +53,45 @@ class EFMInstaller {
 
     public function setup() {
 		// Table for Post types containing panels
-		if( $this->db->get_var( sprintf("SHOW tables LIKE '%s'", EFM_DB_POSTTYPES) ) != EFM_DB_POSTTYPES ){
-			$this->create('CREATE TABLE `'. EFM_DB_POSTTYPES .'` (
-				`type` varchar(20) NOT NULL,				
+		if( $this->db->get_var( sprintf("SHOW tables LIKE '%s'", EFM_DB_OWNER) ) !== EFM_DB_OWNER ){
+			$this->create('CREATE TABLE `'. EFM_DB_OWNER .'` (
+				`id` mediumint(9) NOT NULL AUTO_INCREMENT,
+				`owner` varchar(20) NOT NULL,				
+				`slug` varchar(20) NOT NULL,				
 				`built_in` tinyint(1) NOT NULL,
 				`register` tinyint(1) DEFAULT 0,
 				`arguments` text,
-				`panels` text,
-				PRIMARY KEY (`type`) )'
+				PRIMARY KEY (`id`),
+				KEY `owner` (`owner`),
+				KEY `slug` (`slug`)	)'
 			);
 		}
 		
 		// Table for Panels definition
-		if( $this->db->get_var( sprintf("SHOW tables LIKE '%s'", EFM_DB_PANELS) ) != EFM_DB_PANELS ){
+		if( $this->db->get_var( sprintf("SHOW tables LIKE '%s'", EFM_DB_PANELS) ) !== EFM_DB_PANELS ){
 			$this->create('CREATE TABLE `'. EFM_DB_PANELS .'` (
 				`id` mediumint(9) NOT NULL AUTO_INCREMENT,			
 				`name` varchar(50) NOT NULL,
-				`label` varchar(50) NOT NULL,
+				`title` varchar(50) NOT NULL,
 				PRIMARY KEY (`id`),
 				KEY `name` (`name`)	)'
 			);
 		}
 		
+		// Table for Panel attribution
+		if( $this->db->get_var( sprintf("SHOW tables LIKE '%s'", EFM_DB_APL) ) !== EFM_DB_APL ){
+			$this->create('CREATE TABLE `'. EFM_DB_APL .'` (
+				`field_order` mediumint(9) NOT NULL,			
+				`owner_id` mediumint(9) NOT NULL,
+				`panel_id` mediumint(9) NOT NULL,
+				KEY `field_order` (`field_order`),
+				KEY `owner_id` (`owner_id`),
+				KEY `panel_id` (`panel_id`)	)'
+			);
+		}
+		
 		// Table for fields
-		if( $this->db->get_var( sprintf("SHOW tables LIKE '%s'", EFM_DB_FIELDS) ) != EFM_DB_FIELDS ){
+		if( $this->db->get_var( sprintf("SHOW tables LIKE '%s'", EFM_DB_FIELDS) ) !== EFM_DB_FIELDS ){
 			$this->create('CREATE TABLE `'. EFM_DB_FIELDS .'` (
 				`id` mediumint(9) NOT NULL AUTO_INCREMENT,			
 				`name` varchar(50) NOT NULL,
@@ -95,8 +111,11 @@ class EFMInstaller {
 				KEY `name` (`name`)	)'
 			);
 		}
+		add_action('admin_notices', array( &$this, 'showErrors' ) );
     }
-
+	public function showErrors(){
+		
+	}
     public function deactivate() {}
     public function uninstall() {}
 	

@@ -27,15 +27,16 @@
  *
  * @package efm
  * @subpackage controllers
+ * @extends EFMField
  */
-class TextField extends Field {
+class TextField extends EFMField {
 	public $options = array();
 	public function getSetupOtions(){
 		ob_start();
 		?>
 			<p>A simple text field input</p>
 			<div class="field_display_preview centered">
-				<img src="<?php echo EFM_URL . 'fields/text/preview.jpg' ?>" alt="Text field diplay preview"/>
+				<img src="<?php echo EFM_URL . 'core/fields/text/preview.jpg' ?>" alt="Text field diplay preview"/>
 			</div>
 			<div class="form_block">
 				<label for="field_default_value">
@@ -48,4 +49,15 @@ class TextField extends Field {
 		return ob_get_clean();
 	}	
 	public function displayField(){}
+	public static function getInfo( $key = null ){
+		$infos = array(
+			'name' => 'Text',
+			'type' => 'text',
+			'description' => 'A simple textbox',
+		);
+		if( $key !== null ){
+			return $infos[$key];
+		}			
+		return $infos;
+	}
 }

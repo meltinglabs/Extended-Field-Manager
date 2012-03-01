@@ -1,6 +1,6 @@
 <?php 
 /**
- * Post Types Manager 
+ * Panels
  *
  * Copyright 2006-2012 by lossendae.
  *
@@ -25,20 +25,13 @@
  *
  * @package efm
  * @subpackage controllers
- * @extend PageController
+ * @extend EFMPage
  */
-class PanelsPage extends PageController {	
+class PanelsManager extends EFMPage {	
 		
 	function __construct(){
-		global $wpdb;
-		$this->db = &$wpdb;
-		
-		// $wpdb->show_errors();
-		// $wpdb->print_error();
-		// echo '<pre>'. print_r($this->panel, true) .'</pre>';
+		parent::__construct();
 	}
-	
-	public function loadAssets(){}
 	
 	public function getTitle(){
 		return 'Panels Manager <a class="add-new-h2" href="'. $this->getUrl( array( 'action' => 'createpanel' ) ) .'">Add New</a>';
@@ -66,7 +59,7 @@ class PanelsPage extends PageController {
 						<?php foreach($panels as $panel): ?>
 							<tr>
 								<td>
-									<strong><?php echo $panel->label; ?></strong>
+									<strong><?php echo $panel->title; ?></strong>
 									<div class="row-actions">
 										<span class="edit">
 											<a title="Edit Panels" href="<?php echo $this->getUrl( array( 'action' => 'editpanel', 'id' => $panel->id ) ) ?>">Edit Panel</a>
@@ -74,8 +67,7 @@ class PanelsPage extends PageController {
 									</div>
 								</td>
 								<td class="column-role">
-								0
-									 <?php // echo $panel->field ?>
+									<?php echo $panel->total_fields ?>
 								</td>
 							</tr>
 						<?php endforeach; ?>
@@ -108,7 +100,17 @@ class PanelsPage extends PageController {
 	
 	
 	public function getPanelList(){
-		$panels = $this->db->get_results( "SELECT * FROM ". EFM_DB_PANELS );
+		$panels = $this->db->get_results( $this->db->prepare(
+			"SELECT 
+			p.id,
+			p.title,
+			p.name,
+			COUNT(f.id) AS total_fields 
+			FROM ". EFM_DB_PANELS ." p 
+			LEFT JOIN ". EFM_DB_FIELDS ."  f
+			ON p.id = f.owner_id
+			GROUP BY p.id"
+		));
 		return $panels;
 	}
 }

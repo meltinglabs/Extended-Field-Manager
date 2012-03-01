@@ -1,6 +1,6 @@
 <?php 
 /**
- * CreateFieldPage
+ * CreateField
  *
  * Copyright 2006-2012 by lossendae.
  *
@@ -25,14 +25,13 @@
  *
  * @package efm
  * @subpackage controllers
- * @extend PosttypesPage
+ * @extend PanelsManager
  */
-class CreateFieldPage extends PanelsPage {
+class CreateField extends PanelsManager {
 	public $db = null;
 	
 	function __construct(){
-		global $wpdb;
-		$this->db = &$wpdb;
+		parent::__construct();
 		
 		$this->panel = $this->db->get_row( $this->db->prepare(
 			"SELECT * FROM ". EFM_DB_PANELS ." WHERE id = %u"
@@ -53,6 +52,9 @@ class CreateFieldPage extends PanelsPage {
 	}
 	
 	public function getContent(){
+		/* Load available field list */
+		$this->fieldList = $this->controller->loadFields();
+		
 		$this->owner = $_GET['owner'];
 		$selfUrl = array(
 			'action' => 'createfield',
@@ -69,7 +71,6 @@ class CreateFieldPage extends PanelsPage {
 		}
 		
 		ob_start();
-			if( !empty( $this->errors ) ) { $this->showErrors(); }
 		?>
 			<form id="panel-menu-settings" action="<?php echo $this->getUrl( $selfUrl ) ?>" method="post">
 				<input name="owner_id" type="hidden" value="<?php echo $this->panel->id; ?>"/>
@@ -153,24 +154,8 @@ class CreateFieldPage extends PanelsPage {
 						</div>
 						
 						<div id="select_type" class="misc-pub-section main">
-							<?php 
-								$typeName = $this->get('type');
-								if($typeName == '' || $typeName == 'none'): 
-							?>
 								<p class="centered"><em>Select the type of field you want to create<br/> 
 								Once selected, the appopriate options will replace this text.</em></p>
-							<?php else:
-								$class = $this->controller->loadFieldController( $typeName );
-								if(!$class){			
-									echo 'Could not load Field Class :'. $typeName .'Field';
-								} else {
-									$className = ucfirst($typeName) .'Field';
-									$this->field = new $className();
-									$this->field->setOptions( $this->get('options') );
-									echo $this->field->getSetupOtions();
-								}
-							?>
-							<?php endif; ?>
 						</div>
 					
 					</div>
@@ -180,12 +165,11 @@ class CreateFieldPage extends PanelsPage {
 	}
 	
 	public function getFieldTypesList(){
-		$type = $this->get('type');
-		$selected = ($type == 'text') ? ' selected="selected"' : '';
-		$fieldTypes = '<option value="none">-</option>';
-		$fieldTypes .= '<option value="text"'. $selected .'>Text</option>';
-		$fieldTypes .= '<option value="test">Testing</option>';
-		return $fieldTypes;
+		$list = '<option value="none">-</option>';
+		foreach( $this->fieldList as $type => $info ){			
+			$list .= '<option value="'. $type .'">'. $info['name'] .'</option>';
+		}
+		return $list;
 	}
 	
 	public function checkForm(){		
@@ -252,5 +236,14 @@ class CreateFieldPage extends PanelsPage {
 		$this->fields['display_order'] = !empty($lastFieldDisplayOrder) ? $lastFieldDisplayOrder + 1 : 0;
 		$this->fields['options'] = serialize($this->fields['options']);
 		$this->db->insert(EFM_DB_FIELDS, $this->fields);
+		
+		$newFieldID = $this->db->insert_id;
+		if( $newFieldID ){
+			wp_safe_redirect( $this->getUrl( array( 
+				'action' => 'editfield',
+				'id' => $newFieldID,
+				'new' => 1,
+			)));
+		}		
 	}
 }

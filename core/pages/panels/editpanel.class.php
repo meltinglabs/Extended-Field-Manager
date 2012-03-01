@@ -1,6 +1,6 @@
 <?php 
 /**
- * EditpanelPage
+ * Editpanel
  *  
  * Copyright 2006-2012 by lossendae.
  *
@@ -25,17 +25,14 @@
  *
  * @package efm
  * @subpackage controllers
- * @extend PosttypesPage
+ * @extend PanelsManager
  */
-class EditpanelPage extends PanelsPage {
+class Editpanel extends PanelsManager {
 	public $db = null;
 	public $panel = null;
-	public $errors = array();
 	
-		
 	function __construct(){
-		global $wpdb;
-		$this->db = &$wpdb;
+		parent::__construct();
 		
 		$this->panel = $this->db->get_row( $this->db->prepare(
 			"SELECT * FROM ". EFM_DB_PANELS ." WHERE id = %u"
@@ -55,7 +52,7 @@ class EditpanelPage extends PanelsPage {
 	}
 	
 	public function getTitle(){		
-		return 'Editing Panel : '. $this->panel->label;
+		return 'Editing Panel : '. $this->panel->title;
 	}
 	
 	public function getContent(){			
@@ -70,7 +67,6 @@ class EditpanelPage extends PanelsPage {
 		}
 			
 		ob_start();
-		if( !empty( $this->errors ) ) { $this->showErrors(); }
 		?>
 			<form id="panel-menu-settings" action="<?php echo $this->getUrl( array( 'action' => 'editpanel' ) ) ?>" method="post">
 				<input name="id" type="hidden" value="<?php echo $this->panel->id; ?>"/>
@@ -97,11 +93,11 @@ class EditpanelPage extends PanelsPage {
 				</div>
 			
 				<div class="form_block">
-					<label for="label">
-						Label
+					<label for="title">
+						Tiltle
 						<span class="required">*</span>
 					</label>
-					<input id="label" name="label" type="text" value="<?php echo $this->panel->label; ?>"/>
+					<input id="title" name="title" type="text" value="<?php echo $this->panel->title; ?>"/>
 					<span class="description">Text used as Panel header</span>
 				</div>
 								

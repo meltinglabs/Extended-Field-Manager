@@ -1,6 +1,6 @@
 <?php 
 /**
- * EditFieldPage
+ * EditField
  *
  * Copyright 2006-2012 by lossendae.
  *
@@ -25,16 +25,15 @@
  *
  * @package efm
  * @subpackage controllers
- * @extend PosttypesPage
+ * @extend PanelsManager
  */
-class EditFieldPage extends PanelsPage {
+class EditField extends PanelsManager {
 	public $db = null;
+	public $fields = array();
 	public $field = null;
-	public $success = false;
 	
 	function __construct(){
-		global $wpdb;
-		$this->db = &$wpdb;
+		parent::__construct();
 		
 		$this->field = $this->db->get_row( $this->db->prepare(
 			"SELECT * FROM ". EFM_DB_FIELDS ." WHERE id = %u"
@@ -51,15 +50,20 @@ class EditFieldPage extends PanelsPage {
 	}
 	
 	public function getTitle(){
-		return 'Edit field : '. $this->get('name');
+		return 'Edit field : '. $this->get('label');
 	}
 	
 	public function getContent(){
+		/* Load available field list */
+		$this->fields = $this->controller->loadFields();
+		
 		$selfUrl = array(
 			'action' => 'editfield',
 			'id' => $_GET['id'],
 		);
-		
+		if( isset( $_GET['new'] ) ){
+			$this->setSuccessMessage('Field created successfully');
+		}		
 		if(isset($_POST['submit'])){
 			$this->setFields($_POST);
 			$this->checkForm();
@@ -69,8 +73,6 @@ class EditFieldPage extends PanelsPage {
 		}
 		
 		ob_start();
-			if( !empty( $this->errors ) ) { $this->showErrors(); }
-			if( $this->success ){ $this->showSucessMessage('Field change sucessfully saved'); }
 		?>
 			<form id="panel-menu-settings" action="<?php echo $this->getUrl( $selfUrl ) ?>" method="post">
 				<input name="owner_id" type="hidden" value="<?php echo $this->get('owner_id'); ?>"/>
@@ -161,12 +163,11 @@ class EditFieldPage extends PanelsPage {
 								<p class="centered"><em>Select the type of field you want to create<br/> 
 								Once selected, the appopriate options will replace this text.</em></p>
 							<?php else:
-								$class = $this->controller->loadFieldController( $typeName );
-								if(!$class){			
-									echo 'Could not load Field Class :'. $typeName .'Field';
+								$className = $this->fields[$typeName]['class'];
+								$field = new $className;
+								if( !$field ){			
+									echo 'Could not load Field Class :'. $className;
 								} else {
-									$className = ucfirst($typeName) .'Field';
-									$field = new $className();
 									$field->setOptions( $this->get('options') );
 									echo $field->getSetupOtions();
 								}
@@ -180,13 +181,14 @@ class EditFieldPage extends PanelsPage {
 		<?php
 	}
 	
-	public function getFieldTypesList(){
-		$type = $this->get('type');
-		$selected = ($type == 'text') ? ' selected="selected"' : '';
-		$fieldTypes = '<option value="none">-</option>';
-		$fieldTypes .= '<option value="text"'. $selected .'>Text</option>';
-		$fieldTypes .= '<option value="test">Testing</option>';
-		return $fieldTypes;
+	public function getFieldTypesList(){	
+		$list = '<option value="none">-</option>';
+		foreach( $this->fields as $type => $info ){			
+			$list .= $this->get('type') == $type ? 
+				'<option value="'. $type .'" selected="selected">'. $info['name'] .'</option>' : 
+				'<option value="'. $type .'">'. $info['name'] .'</option>';
+		}
+		return $list;
 	}
 	
 	public function checkForm(){		
@@ -283,6 +285,6 @@ class EditFieldPage extends PanelsPage {
 		$this->db->update( EFM_DB_FIELDS, $this->field, array('id' => $this->get('id') ) );
 		// $this->db->show_errors();
 		// $this->db->print_error();
-		$this->success = true;
+		$this->setSuccessMessage('Field change sucessfully saved');
 	}
 }

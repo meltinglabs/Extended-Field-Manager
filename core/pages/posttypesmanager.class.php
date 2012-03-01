@@ -1,6 +1,6 @@
 <?php 
 /**
- * PosttypesPage
+ * PosttypesManager
  *
  * Copyright 2006-2012 by lossendae.
  *
@@ -25,9 +25,9 @@
  *
  * @package efm
  * @subpackage controllers
- * @extend PageController
+ * @extend EFMPage
  */
-class PosttypesPage extends PageController {	
+class PosttypesManager extends EFMPage {	
 	public $title = 'Post Types List';
 	public $icon = 'icon-options-general';
 	

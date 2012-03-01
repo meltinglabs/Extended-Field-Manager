@@ -1,6 +1,6 @@
 <?php 
 /**
- * Plugin Admin Controller
+ * PEFMAdminController
  *
  * Copyright 2006-2012 by lossendae.
  *
@@ -22,10 +22,10 @@
  */
  
 /**
- * The plugin base class
+ * EFMAdminController
  *
  * @package efm
- * @subpackage controllers
+ * @subpackage core
  */
 class EFMAdminController {
 	public $page = null;
@@ -40,68 +40,144 @@ class EFMAdminController {
     function __construct() {
 		/*** Load the administration panel menus ***/
 		add_action('admin_menu', array( &$this, 'loadAdminMenu' ));
+		
+		/*** Load the metabox loader ***/
+		add_action('admin_init', array( &$this, 'initialize' ));
 					
 		/*** nullify any existing autoloads ***/
 		spl_autoload_register(null, false);
 		
 		/*** specify extensions that may be loaded ***/
-		spl_autoload_extensions('.php, .class.php');	
+		spl_autoload_extensions('.class.php');	
 
 		/*** Handle ajax request ***/
 		add_action('wp_ajax_efmrequest', array( $this, 'handleAjaxRequest' ));
 	}
 	
+	public function initialize(){
+		global $wpdb;
+		
+		$this->metaboxes = $wpdb->get_results( $wpdb->prepare(
+			'SELECT 
+				o.slug,
+				p.id,
+				p.name,
+				p.title 
+			FROM
+				'. EFM_DB_OWNER .' o 
+				LEFT JOIN '. EFM_DB_APL .' a 
+					ON o.id = a.owner_id 
+				LEFT JOIN '. EFM_DB_PANELS .' p 
+					ON a.panel_id = p.id 
+				WHERE o.owner = "posttype"
+				ORDER BY a.field_order'
+		));
+		
+		if( !empty( $this->metaboxes ) ){
+			foreach( $this->metaboxes as $metabox ){
+				echo '<pre>'. print_r($metabox, true) .'</pre>';
+			}		
+		}
+	}
+	
 	/**
-     * loadPageController.
+     * setIncludePaths.
+     *
+     * Set the included path for the plugin classes autoloading
+     *
+	 * @access public
+	 * @param string $task Tell the method wheter to set the include path to a specific task
+	 * @return void
+     */
+	public function setIncludePaths( $task = null ){
+		/* @infos : http://framework.zend.com/manual/en/performance.classloading.html */
+		$paths = array(
+			EFM_CORE_PATH,
+		);
+		if( $task == null ){
+			/* Pages, subpages and fields directories added to the include path */
+			$paths = array_merge( array(
+				EFM_PAGES_PATH,
+				EFM_PAGES_PATH . DIRECTORY_SEPARATOR . $this->classFilename,
+				EFM_FIELDS_PATH,
+			), $paths);
+		}
+		if( $task == 'fields' ){
+			$paths = array_merge( array(
+				EFM_FIELDS_PATH,
+			), $paths);
+		}
+		set_include_path( implode( PATH_SEPARATOR, $paths ) );
+			
+		/*** register the page class loader method ***/
+		spl_autoload_register( array( &$this, 'loadClass' ) );	
+	}
+	
+	/**
+     * loadClass.
      *
      * Load the current page controller along with the abstract class all page should extends from
      *
 	 * @access public
      */
-	public function loadPageController(){
-		$base = EFM_CORE_PATH . 'page.class.php';
-		if( !file_exists($base) ){
-			return false;
-		}		
-		
-		$page = $this->classFilename;
-		$filename =  $page .'.class.php';
-		$file = EFM_CORE_PATH . 'pages/' . $filename;
-		
-		if( !file_exists($file) ){
-			return false;
-		}
-		include $base;
-		include $file;
-		
-		if( null !== $this->subPage ){
-			$filename =  $this->subPage .'.class.php';
-			$file = EFM_CORE_PATH . 'pages/'. $page .'/'. $filename;
-			if( !file_exists($file) ){
-				return false;
+	public function loadClass( $className ){
+		include_once $className .'.class.php';
+	}
+	
+	/**
+     * loadFields.
+     *
+     * Load field classes
+     *
+	 * @access public
+	 * @param mixed array|string $load - Whether to include all fields, only a subset of field classes or a single field class
+	 * @return array $classes - An array of instantiable field classes
+     */
+	public function loadFields( $load = array() ){	
+		if( is_array( $load ) ){
+			$dirRoot = new DirectoryIterator( EFM_FIELDS_PATH );
+			foreach($dirRoot as $value){
+				if( $value->isDir() && !$value->isDot() ){
+					require_once $value . DIRECTORY_SEPARATOR . $value . '.class.php';
+					$className = ucfirst( $value ) . 'Field';
+					$type = $className::getInfo('type');
+					$classes[$type] = array(
+						'class' => $className,
+						'name' => $className::getInfo('name'),
+					);
+				}			
 			}
-			include $file;
+			return $classes;
 		}
-		return true;
+		$file = $load . DIRECTORY_SEPARATOR . $load . '.class.php';
+		if( require_once $file ){
+			return true;
+		}
+		return false;
 	}
 	
-	public function loadFieldController($field){
-		$base = EFM_CORE_PATH . 'field.class.php';
-		if( !file_exists($base) ){
-			return false;
-		}
-		$filename = $field . '.class.php';
-		$file = EFM_FIELDS_PATH . $field .'/' . $filename;
-		
-		if( !file_exists($file) ){
-			return false;
-		}
-		
-		include $base;
-		include $file;
-		return true;
-	}
 	
+	/**
+     * handleAjaxRequest
+     *
+     * Dispatch admin ajax request
+     *
+	 * @access public
+     */
+	public function handleAjaxRequest(){
+		$this->setIncludePaths('fields');
+		$name = $_POST['value'];
+		if( !$this->loadFields( $name ) ){
+			echo 'Could not load Field :'. $name;
+			die();
+		}		
+
+		$className = ucfirst($name) .'Field';
+		$this->field = new $className();
+		echo $this->field->getSetupOtions();	
+		die();
+	}
+		
 	/**
      * loadAdminMenu.
      *
@@ -111,28 +187,14 @@ class EFMAdminController {
      */
 	public function loadAdminMenu(){
 		$mainLandingPage = EFM_PREFIX . 'posttypes';
-		add_menu_page( 'EFM Admin', 'EFM Admin', 10, $mainLandingPage, array( &$this, 'load') );
-		$pluginPages[] = add_submenu_page( $mainLandingPage, 'Post Types', 'Post Types', 10, $mainLandingPage, array( &$this, 'load' ) );	
-		$pluginPages[] = add_submenu_page( $mainLandingPage, 'Panels', 'Panels', 10, EFM_PREFIX . 'panels', array( &$this, 'load' ) );	
+		add_menu_page( 'EFM Admin', 'EFM Admin', 10, $mainLandingPage, array( &$this, 'loadPage') );
+		$pluginPages[] = add_submenu_page( $mainLandingPage, 'Post Types', 'Post Types', 10, $mainLandingPage, array( &$this, 'loadPage' ) );	
+		$pluginPages[] = add_submenu_page( $mainLandingPage, 'Panels', 'Panels', 10, EFM_PREFIX . 'panels', array( &$this, 'loadPage' ) );	
 		
 		/*** Load the full admin css only when on plugin managing pages ***/
 		foreach($pluginPages as $key => $page){
 			add_action('admin_head-'. $page, array(&$this, 'loadAssets'), $page);
 		}		
-	}
-	
-	/**
-     * loadAssets.
-     *
-     * Load CSS and JS for PLugin Management Pages
-     *
-	 * @access public
-     */
-	public function loadAssets($er){		
-		echo '<link rel="stylesheet" href="'. EFM_CSS_URL . 'style.css" type="text/css" charset="utf-8" />';		
-		if($this->load('assets')){
-			$this->page->loadAssets();
-		}
 	}
 	
 	/**
@@ -143,74 +205,54 @@ class EFMAdminController {
 	 * @access public
 	 * @return string The processed content || && error message if any
      */
-	public function load($render = true){
-		$this->classFilename = str_replace( EFM_PREFIX, '', $_GET['page'] );
-		$className = ucfirst( $this->classFilename ) . 'Page';
+	public function loadPage($render = true){		
+		$requestedPage = (string) $_GET['page'];
+		$this->classFilename = str_replace( EFM_PREFIX, '', $requestedPage );
+		$className = ucfirst( $this->classFilename ) . 'Manager';
 		
 		/* We may be on a subpage */
-		if( isset( $_GET['action'] ) ){ 
+		if( isset( $_GET['action'] ) && is_string( $_GET['action'] ) ){ 
 			$this->subPage = $_GET['action']; 
-			/* Change the className to initialize accordingly */
-			$className = ucfirst( $this->subPage ) . 'Page';
-		}
+			$className = ucfirst( $this->subPage );
+		}	
 		
-		/*** register the page loader method ***/
-		spl_autoload_register( array( &$this, 'loadPageController' ) );			
+		/*** Set the plugin include paths here after dynamic path name has been set ***/
+		$this->setIncludePaths();
 		
+		/* Instanciate the requested page */
 		$this->page = new $className();
+		
 		switch($render){
 			case 'assets':
-				if( !$this->page instanceof PageController ){
+				if( !$this->page instanceof EFMPage ){
 					return false;
 				}
 				return true;
 				break;
 			default:
-				if( !$this->page instanceof PageController ){
+				if( !$this->page instanceof EFMPage ){
 					return $this->render(
-						'Uh Oh !', 
-						'<div class="error below-h2" id="notice"><p>All Pages have to extend the PageController abstract class.</p></div>'
+						'Sorry...', 
+						'<div class="error below-h2" id="notice"><p>All Pages have to extend the EFMPage abstract class.</p></div>'
 					);	
 				}
 				$this->page->setController($this);
-				return $this->render($this->page->getTitle(), $this->page->getContent(), $this->page->icon);
+				return $this->page->render();
 				break;
 		}		
 	}	
 	
 	/**
-     * render
+     * loadAssets.
      *
-     * Render the requested page
+     * Load CSS and JS for PLugin Management Pages
      *
 	 * @access public
-	 * @param string $title - The page title
-	 * @param string $content - The page content
-	 * @param string $icon - The page icon to use (optionnal - default : null)
-	 * @return string The processed content || && error message if any
      */
-	public function render($title, $content, $icon =  null){	
-		?>
-			<div id="admin" class="wrap">
-				<?php if($icon !== null): ?>
-					<div class="icon32" id="<?php echo $icon; ?>"><br/></div>
-				<?php endif; ?>
-				<h2><?php echo $title; ?></h2>
-				<?php echo $content; ?>
-			</div>
-		<?php
-	}
-	
-	public function handleAjaxRequest(){
-		$name = $_POST['value'];
-		$class = $this->loadFieldController($name);
-		if(!$class){			
-			echo 'Could not load Field Class :'. $name .'Field';
-		} else {
-			$className = ucfirst($name) .'Field';
-			$this->field = new $className();
-			echo $this->field->getSetupOtions();
-		}		
-		die();
+	public function loadAssets($er){		
+		echo '<link rel="stylesheet" href="'. EFM_CSS_URL . 'style.css" type="text/css" charset="utf-8" />';		
+		if( $this->loadPage('assets') ){
+			$this->page->loadAssets();
+		}
 	}
 }

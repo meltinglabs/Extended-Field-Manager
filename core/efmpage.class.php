@@ -1,6 +1,6 @@
 <?php 
 /**
- * PageController
+ * EFMPage
  *
  * Copyright 2006-2012 by lossendae.
  *
@@ -23,12 +23,12 @@
 /**
  * Page Controller
  * 
- * The plugin panel base abstract class that main controllers extend to add uis to wordpress wp-admin
+ * The base abstract class that all pages extend from when browsing the EFM Manager admin
  *
  * @package efm
  * @subpackage controllers
  */
-abstract class PageController {
+abstract class EFMPage {
 	/**
      * @access public
      * @var title - The panel title.
@@ -52,6 +52,9 @@ abstract class PageController {
      * @var errors - Errors to show below the page title if any
      */
 	public $errors = array();
+	public $success = false;
+	public $successMessage;
+	public $db;
 
 	/**
      * The Page Constructor.
@@ -60,7 +63,10 @@ abstract class PageController {
      *
      * @return PageController A unique PageController instance.
      */
-    function __construct() {}
+    function __construct() {
+		global $wpdb;
+		$this->db = &$wpdb;
+	}
 	
 	function setController(EFMAdminController &$controller){
 		$this->controller = &$controller;
@@ -86,6 +92,29 @@ abstract class PageController {
 		return true;
 	}
 	
+	/**
+     * render
+     *
+     * Render the requested page
+     *
+	 * @access public
+	 * @return string The processed content || && error message if any
+     */
+	public function render(){	
+		$content =  $this->getContent();
+		?>
+			<div id="admin" class="wrap">
+				<?php if($icon !== null): ?>
+					<div class="icon32" id="<?php echo $this->icon; ?>"><br/></div>
+				<?php endif; ?>
+				<h2><?php echo $this->getTitle(); ?></h2>
+				<?php if( !empty( $this->errors ) ) { $this->showErrors(); } ?>
+				<?php if( $this->success ){ $this->showSucessMessage(); } ?>
+				<?php echo $content; ?>
+			</div>
+		<?php
+	}
+		
 	public function addError($error){
 		array_push($this->errors, $error);
 	}
@@ -103,10 +132,15 @@ abstract class PageController {
 		<?php
 	}
 	
-	public function showSucessMessage($message){
+	public function setSuccessMessage( $message ){
+		$this->success = true;
+		$this->successMessage = $message;
+	}
+	
+	public function showSucessMessage(){
 		?>
 			<div class="updated below-h2">
-				<p><?php echo $message; ?></p>					
+				<p><?php echo $this->successMessage; ?></p>					
 			</div>
 		<?php
 	}

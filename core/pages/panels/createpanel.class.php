@@ -1,6 +1,6 @@
 <?php 
 /**
- * ManagepanelsPage
+ * Createpanel
  *
  * Copyright 2006-2012 by lossendae.
  * 
@@ -25,9 +25,9 @@
  *
  * @package efm
  * @subpackage controllers
- * @extend PosttypesPage
+ * @extend PanelsManager
  */
-class CreatepanelPage extends PanelsPage {
+class Createpanel extends PanelsManager {
 	public $db = null;
 	public $errors = array();
 	
@@ -36,10 +36,11 @@ class CreatepanelPage extends PanelsPage {
 	}
 	
 	public function getContent(){
-		if( isset($_POST['submit']) ){
-			$data = $this->checkForm($_POST);		
+		if( isset( $_POST['submit'] ) ){
+			$data = $this->checkForm( $_POST );
 			if( empty( $this->errors ) ){
-				$id = $this->createPanel($_POST);
+				unset( $_POST['submit'] );
+				$id = $this->savePanel( $_POST );
 			}
 		}
 		
@@ -66,10 +67,10 @@ class CreatepanelPage extends PanelsPage {
 						<tbody>
 							<tr valign="top">
 								<th scope="row">
-									<label for="label">Label</label>
+									<label for="title">Title</label>
 								</th>
 								<td>
-									<input id="label" name="label" class="regular-text" type="text" />
+									<input id="title" name="title" class="regular-text" type="text" />
 									<span class="description">Le texte qui sera placé dans la barre de titre</span>
 								</td>
 							</tr>
@@ -99,17 +100,8 @@ class CreatepanelPage extends PanelsPage {
 		if( !empty( $exist ) ){ $this->addError('This name is already taken, please choose another one'); }
 	}
 
-	public function createPanel( $data ){  
-		$sql = sprintf(
-			"INSERT INTO %s ".
-			"(name,label) ".
-			"VALUES ('%s','%s')",
-			EFM_DB_PANELS,
-			$data['name'],
-			$data['label']
-		);
-		$this->db->query($sql);
-    
+	public function savePanel( $data ){  
+		$this->db->insert(EFM_DB_PANELS, $data);
 		$postTypeId = $this->db->insert_id;
 		return $postTypeId;
 	}
