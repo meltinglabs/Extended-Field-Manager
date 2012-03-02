@@ -1,0 +1,39 @@
+.efm_metabox{
+	border: 1px solid #DFDFDF;
+	border-bottom: 0 none;
+    margin: 10px 0;
+}
+
+/*** Form style ***/
+.efm_metabox .form_block{
+    padding: 12px 18px 18px;
+	border-bottom: 1px solid #DFDFDF;
+}
+.efm_metabox .form_block:hover{
+	background-color: #FAFAFA;
+}
+.efm_metabox .form_block label{
+	color: #606060;
+    font-weight: bold;
+}
+.efm_metabox .form_block label,
+.efm_metabox .form_block .description{
+	display: block;
+	padding: 2px;
+}
+.efm_metabox .form_block label .required{
+	color: red;
+}
+.efm_metabox .form_block textarea,
+.efm_metabox .form_block input[type="text"], 
+.efm_metabox .form_block input[type="password"],  
+.efm_metabox .form_block input[type="email"], 
+.efm_metabox .form_block input[type="number"], 
+.efm_metabox .form_block input[type="tel"], 
+.efm_metabox .form_block input[type="url"], 
+.efm_metabox .form_block select { 
+	color: #555555;
+    margin: 2px 0;
+    padding: 8px;
+    width: 100%;
+}

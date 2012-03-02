@@ -1,6 +1,6 @@
 <?php 
 /**
- * TextField
+ * TextareaField
  *
  * Copyright 2006-2012 by lossendae.
  *
@@ -21,7 +21,7 @@
  * @package efm
  */
 /**
- * TextField
+ * TextareaField
  * 
  * A simple text input
  *
@@ -29,22 +29,15 @@
  * @subpackage fields
  * @extends EFMField
  */
-class TextField extends EFMField {
+class TextareaField extends EFMField {
 	public $options = array();
 	
 	public function getSetupOtions(){
 		ob_start();
 		?>
-			<p>A simple text field input</p>
+			<p><?php echo self::getInfo('description') ?></p>
 			<div class="field_display_preview centered">
 				<img src="<?php echo EFM_URL . 'core/fields/text/preview.jpg' ?>" alt="Text field diplay preview"/>
-			</div>
-			<div class="form_block">
-				<label for="field_default_value">
-					Default Value					
-				</label>
-				<input type="text" name="options[default_value]" id="field_default_value" value="<?php echo $this->getOption('default_value') ?>"/>	
-				<span class="description">Default value to instanciate the field with</span>					
 			</div>
 		<?php
 		return ob_get_clean();
@@ -53,9 +46,9 @@ class TextField extends EFMField {
 	
 	public static function getInfo( $key = null ){
 		$infos = array(
-			'name' => 'Text',
-			'type' => 'text',
-			'description' => 'A simple textbox',
+			'name' => 'Textarea',
+			'type' => 'textarea',
+			'description' => 'A textarea field',
 		);
 		if( $key !== null ){
 			return $infos[$key];
@@ -73,7 +66,7 @@ class TextField extends EFMField {
 				<label for="<?php echo $field->field_id; ?>">
 					<?php echo $field->label; ?>					
 				</label>
-				<input type="text" name="<?php echo $field->field_id; ?>" id="<?php echo $field->field_id; ?>" value="<?php echo $value; ?>"/>	
+				<textarea rows="10" name="<?php echo $field->field_id; ?>" id="<?php echo $field->field_id; ?>"><?php echo $value; ?></textarea>
 				<?php if( !empty( $field->description ) ): ?>
 					<span class="description"><?php echo $field->description; ?></span>
 				<?php endif; ?>

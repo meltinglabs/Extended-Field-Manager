@@ -1,6 +1,6 @@
 <?php 
 /**
- * TextField
+ * CheckboxField
  *
  * Copyright 2006-2012 by lossendae.
  *
@@ -21,31 +21,20 @@
  * @package efm
  */
 /**
- * TextField
+ * CheckboxField
  * 
- * A simple text input
+ * A simple checkbox field
  *
  * @package efm
  * @subpackage fields
  * @extends EFMField
  */
-class TextField extends EFMField {
+class CheckboxField extends EFMField {
 	public $options = array();
-	
 	public function getSetupOtions(){
 		ob_start();
 		?>
-			<p>A simple text field input</p>
-			<div class="field_display_preview centered">
-				<img src="<?php echo EFM_URL . 'core/fields/text/preview.jpg' ?>" alt="Text field diplay preview"/>
-			</div>
-			<div class="form_block">
-				<label for="field_default_value">
-					Default Value					
-				</label>
-				<input type="text" name="options[default_value]" id="field_default_value" value="<?php echo $this->getOption('default_value') ?>"/>	
-				<span class="description">Default value to instanciate the field with</span>					
-			</div>
+			<p><?php echo self::getInfo('description') ?></p>
 		<?php
 		return ob_get_clean();
 	}	
@@ -53,9 +42,9 @@ class TextField extends EFMField {
 	
 	public static function getInfo( $key = null ){
 		$infos = array(
-			'name' => 'Text',
-			'type' => 'text',
-			'description' => 'A simple textbox',
+			'name' => 'Checkbox',
+			'type' => 'checkbox',
+			'description' => 'A Checkbox field',
 		);
 		if( $key !== null ){
 			return $infos[$key];
@@ -63,17 +52,19 @@ class TextField extends EFMField {
 		return $infos;
 	}
 	
-	public static function render( &$field, &$values ){
+	
+	public static function render( &$field, &$values ){		
 		$options = unserialize( $field->options );
-		$value = array_key_exists( $field->name, $values ) ? $values[$field->name] : $options['default_value'];
-
+		$value = array_key_exists( $field->name, $values ) && $values[$field->name] == "on" ? ' checked="checked"' : '';
+		
 		ob_start();
 		?>
 			<div class="form_block">
 				<label for="<?php echo $field->field_id; ?>">
-					<?php echo $field->label; ?>					
+					<input type="checkbox" name="<?php echo $field->field_id; ?>" id="<?php echo $field->field_id; ?>" <?php echo $value; ?>/>	
+					<?php echo $field->label; ?>						
 				</label>
-				<input type="text" name="<?php echo $field->field_id; ?>" id="<?php echo $field->field_id; ?>" value="<?php echo $value; ?>"/>	
+				
 				<?php if( !empty( $field->description ) ): ?>
 					<span class="description"><?php echo $field->description; ?></span>
 				<?php endif; ?>

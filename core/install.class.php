@@ -90,6 +90,17 @@ class EFMInstaller {
 			);
 		}
 		
+		// Table for meta groups
+		if( $this->db->get_var( sprintf("SHOW tables LIKE '%s'", EFM_DB_META_GROUP) ) !== EFM_DB_META_GROUP ){
+			$this->create('CREATE TABLE `'. EFM_DB_META_GROUP .'` (
+				`panel_id` mediumint(9) NOT NULL,			
+				`post_id` mediumint(9) NOT NULL,
+				`group` text,
+				KEY `panel_id` (`panel_id`),
+				KEY `post_id` (`post_id`) )'
+			);
+		}
+		
 		// Table for fields
 		if( $this->db->get_var( sprintf("SHOW tables LIKE '%s'", EFM_DB_FIELDS) ) !== EFM_DB_FIELDS ){
 			$this->create('CREATE TABLE `'. EFM_DB_FIELDS .'` (

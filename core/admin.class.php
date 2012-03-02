@@ -38,31 +38,40 @@ class EFMAdminController {
      * @return PluginManager A unique PluginManager instance.
      */
     function __construct() {
-		/*** Load the administration panel menus ***/
-		add_action('admin_menu', array( &$this, 'loadAdminMenu' ));
-		
 		/*** Load the metabox loader ***/
-		add_action('admin_init', array( &$this, 'initialize' ));
-					
+		add_action('load-post.php', array( &$this, 'initialize' ));
+		
+		/*** Load the administration panel menus ***/
+		add_action('admin_menu', array( &$this, 'loadAdminMenu' ));		
+							
 		/*** nullify any existing autoloads ***/
 		spl_autoload_register(null, false);
 		
 		/*** specify extensions that may be loaded ***/
-		spl_autoload_extensions('.class.php');	
+		spl_autoload_extensions('.class.php');			
 
 		/*** Handle ajax request ***/
 		add_action('wp_ajax_efmrequest', array( $this, 'handleAjaxRequest' ));
 	}
 	
-	public function initialize(){
+	public function initialize($test){
 		global $wpdb;
 		
-		$this->metaboxes = $wpdb->get_results( $wpdb->prepare(
+		add_action( 'admin_print_styles-post.php', array( &$this, 'loadMetaboxAssets') );
+		add_action( 'admin_print_styles-post-new.php', array( &$this, 'loadMetaboxAssets') );
+
+		
+		$metaboxes = $wpdb->get_results( $wpdb->prepare(
 			'SELECT 
 				o.slug,
 				p.id,
 				p.name,
-				p.title 
+				p.title,
+				( SELECT GROUP_CONCAT(DISTINCT f.type) 
+				  FROM wp_efm_fields f 
+				  WHERE f.owner = "panel" 
+				  AND f.owner_id = p.id 
+				) AS fieldtypes
 			FROM
 				'. EFM_DB_OWNER .' o 
 				LEFT JOIN '. EFM_DB_APL .' a 
@@ -71,13 +80,73 @@ class EFMAdminController {
 					ON a.panel_id = p.id 
 				WHERE o.owner = "posttype"
 				ORDER BY a.field_order'
-		));
+		), ARRAY_A);
 		
-		if( !empty( $this->metaboxes ) ){
-			foreach( $this->metaboxes as $metabox ){
-				echo '<pre>'. print_r($metabox, true) .'</pre>';
-			}		
-		}
+		// $wpdb->show_errors();
+		// $wpdb->print_error();
+		
+		if( !empty( $metaboxes ) ){
+			/* Load the metabox class handler and the field abstract class */
+			include_once 'efmmetabox.class.php';
+			include_once EFM_CORE_PATH . DIRECTORY_SEPARATOR . 'efmfield.class.php';
+			$loaded = array();
+			$i = 0;	
+		
+			/*** debug ***/
+			echo '<br/><br/>';
+			$tstart = $this->getMicrotime();	
+			
+			foreach( $metaboxes as $metabox ){	
+				$fields = explode( ',', $metabox['fieldtypes'] );
+				if($i == 0){		
+					/* First metabox, include all fields */
+					foreach( $fields as $field ){
+						include EFM_FIELDS_PATH . DIRECTORY_SEPARATOR . $field . DIRECTORY_SEPARATOR . $field . '.class.php';
+						$loaded[] = $field;
+					}					
+				} else {
+					/* Following metabox, only load unloaded fields */
+					foreach( $fields as $field ){
+						if( !in_array( $field, $loaded ) ){
+							include EFM_FIELDS_PATH . DIRECTORY_SEPARATOR . $field . DIRECTORY_SEPARATOR . $field . '.class.php';
+							$loaded[] = $field;
+						}
+					}					
+				}
+				// EFMMetabox::init( $metabox );
+				$panel = new EFMMetabox( $metabox );				
+				$i++;
+			}
+			
+			/*** debug ***/
+			$tend = $this->getMicrotime();		
+			echo $this->getBench($tstart, $tend, 'new class method');
+		}		
+	}
+	
+	
+	/**
+     * loadAssets.
+     *
+     * Load CSS and JS for PLugin Management Pages
+     *
+	 * @access public
+     */
+	public function loadMetaboxAssets(){		
+		echo '<link rel="stylesheet" href="'. EFM_CSS_URL . 'metabox.css" type="text/css" charset="utf-8" />';		
+	}
+	
+	/*** debug ***/
+	public function getMicrotime(){
+		$mtime = microtime();
+		$mtime = explode(" ", $mtime);
+		$mtime = $mtime[1] + $mtime[0];
+		return $mtime;
+	} 
+	public function getBench($tstart, $tend, $name = 'not_set'){
+		$totalTime = ($tend - $tstart);
+		$totalTime = sprintf("Exec time for %s * %2.4f s", $name, $totalTime);
+		return $totalTime .'<br/>';
 	}
 	
 	/**
@@ -249,7 +318,7 @@ class EFMAdminController {
      *
 	 * @access public
      */
-	public function loadAssets($er){		
+	public function loadAssets(){		
 		echo '<link rel="stylesheet" href="'. EFM_CSS_URL . 'style.css" type="text/css" charset="utf-8" />';		
 		if( $this->loadPage('assets') ){
 			$this->page->loadAssets();

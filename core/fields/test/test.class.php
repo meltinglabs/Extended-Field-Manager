@@ -23,10 +23,10 @@
 /**
  * TestField
  * 
- * All custom fields have to extend this class
+ * A debugging purpose field, mimic a text field
  *
  * @package efm
- * @subpackage controllers
+ * @subpackage fields
  * @extends EFMField
  */
 class TestField extends EFMField {
@@ -46,6 +46,7 @@ class TestField extends EFMField {
 		return ob_get_clean();
 	}	
 	public function displayField(){}
+	
 	public static function getInfo( $key = null ){
 		$infos = array(
 			'name' => 'Test',
@@ -56,5 +57,25 @@ class TestField extends EFMField {
 			return $infos[$key];
 		}			
 		return $infos;
+	}
+	
+	
+	public static function render( &$field, &$values ){		
+		$options = unserialize( $field->options );
+		$value = array_key_exists( $field->name, $values ) ? $values[$field->name] : $options['default_value'];
+		
+		ob_start();
+		?>
+			<div class="form_block">
+				<label for="<?php echo $field->field_id; ?>">
+					<?php echo $field->label; ?>					
+				</label>
+				<input type="text" name="<?php echo $field->field_id; ?>" id="<?php echo $field->field_id; ?>" value="<?php echo $value; ?>"/>	
+				<?php if( !empty( $field->description ) ): ?>
+					<span class="description"><?php echo $field->description; ?></span>
+				<?php endif; ?>
+			</div>					
+		<?php
+		return ob_get_clean();
 	}
 }
