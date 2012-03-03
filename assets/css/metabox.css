@@ -13,13 +13,14 @@
 	background-color: #FAFAFA;
 }
 .efm_metabox .form_block label{
-	color: #606060;
+	color: #505050;
     font-weight: bold;
 }
 .efm_metabox .form_block label,
 .efm_metabox .form_block .description{
 	display: block;
-	padding: 2px;
+	line-height: 1;
+	padding: 2px 2px 0;
 }
 .efm_metabox .form_block label .required{
 	color: red;
@@ -33,7 +34,11 @@
 .efm_metabox .form_block input[type="url"], 
 .efm_metabox .form_block select { 
 	color: #555555;
-    margin: 2px 0;
+    margin: 5px 0;
+    min-width: 320px;
     padding: 8px;
-    width: 100%;
+    width: 50%;
+}
+.efm_metabox .form_block textarea{
+	width: 100%;
 }

@@ -68,7 +68,7 @@ abstract class EFMPage {
 		$this->db = &$wpdb;
 	}
 	
-	function setController(EFMAdminController &$controller){
+	function setController(EFMAdmin &$controller){
 		$this->controller = &$controller;
 	}
 		

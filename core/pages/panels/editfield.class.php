@@ -230,7 +230,7 @@ class EditField extends PanelsManager {
 		$exist = $this->db->get_var( $this->db->prepare( 
 			"SELECT ". $field ." 
 			FROM ". EFM_DB_FIELDS ." f 
-			WHERE f.owner ='". $this->owner ."' 
+			WHERE f.owner_type ='". $this->owner_type ."' 
 			AND f.". $field ."  = '". $name ."' 
 			AND f.owner_id=". $this->panel->id
 		));

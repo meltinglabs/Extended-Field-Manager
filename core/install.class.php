@@ -45,6 +45,8 @@ class EFMInstaller {
 		
 		
 		register_activation_hook( $file, array( &$this, 'setup' ) );
+		// register_deactivation_hook( __FILE__, array( 'EFMInstaller', 'deactivate' ) );
+		// register_uninstall_hook( __FILE__, array( 'EFMInstaller', 'onUninstall' ) );
     }
 	
 	public function create($sql){
@@ -56,13 +58,13 @@ class EFMInstaller {
 		if( $this->db->get_var( sprintf("SHOW tables LIKE '%s'", EFM_DB_OWNER) ) !== EFM_DB_OWNER ){
 			$this->create('CREATE TABLE `'. EFM_DB_OWNER .'` (
 				`id` mediumint(9) NOT NULL AUTO_INCREMENT,
-				`owner` varchar(20) NOT NULL,				
+				`owner_type` varchar(20) NOT NULL,				
 				`slug` varchar(20) NOT NULL,				
 				`built_in` tinyint(1) NOT NULL,
 				`register` tinyint(1) DEFAULT 0,
 				`arguments` text,
 				PRIMARY KEY (`id`),
-				KEY `owner` (`owner`),
+				KEY `owner` (`owner_type`),
 				KEY `slug` (`slug`)	)'
 			);
 		}
@@ -91,13 +93,16 @@ class EFMInstaller {
 		}
 		
 		// Table for meta groups
-		if( $this->db->get_var( sprintf("SHOW tables LIKE '%s'", EFM_DB_META_GROUP) ) !== EFM_DB_META_GROUP ){
-			$this->create('CREATE TABLE `'. EFM_DB_META_GROUP .'` (
-				`panel_id` mediumint(9) NOT NULL,			
+		if( $this->db->get_var( sprintf("SHOW tables LIKE '%s'", EFM_DB_METAS) ) !== EFM_DB_METAS ){
+			$this->create('CREATE TABLE `'. EFM_DB_METAS .'` (
+				`field_id` mediumint(9) NOT NULL,
+				`panel_id` mediumint(9) NOT NULL,
 				`post_id` mediumint(9) NOT NULL,
-				`group` text,
+				`meta_id` mediumint(9) NOT NULL,
+				KEY `field_id` (`field_id`),
 				KEY `panel_id` (`panel_id`),
-				KEY `post_id` (`post_id`) )'
+				KEY `post_id` (`post_id`),
+				KEY `meta_key` (`meta_id`)'
 			);
 		}
 		
@@ -112,11 +117,11 @@ class EFMInstaller {
 				`required` tinyint(1) DEFAULT 0,
 				`duplicable` tinyint(1) DEFAULT 0,
 				`options` text,
-				`owner` varchar(20) NOT NULL DEFAULT "panel",
+				`owner_type` varchar(20) NOT NULL DEFAULT "panel",
 				`owner_id` mediumint(9) NOT NULL,
 				`display_order` mediumint(9) NOT NULL,
 				PRIMARY KEY (`id`),
-				KEY `owner` (`owner`),
+				KEY `owner_type` (`owner_type`),
 				KEY `owner_id` (`owner_id`),
 				KEY `display_order` (`display_order`),
 				KEY `name` (`name`)	)'

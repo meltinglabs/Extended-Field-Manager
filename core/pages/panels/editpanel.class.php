@@ -114,7 +114,7 @@ class Editpanel extends PanelsManager {
 	public function getRightSide(){
 		$fieldAction = array(
 			'action' => 'createfield',
-			'owner' => 'panel',
+			'owner_type' => 'panel',
 			'id' => $this->panel->id,
 		);
 		?>				
@@ -148,7 +148,7 @@ class Editpanel extends PanelsManager {
 		$fields = $this->db->get_results( $this->db->prepare( 
 			"SELECT id, label, type, name 
 			FROM ". EFM_DB_FIELDS ." f 
-			WHERE f.owner = 'panel' 
+			WHERE f.owner_type = 'panel' 
 			AND f.owner_id = ". $this->panel->id ."
 			ORDER BY f.display_order" 
 		));

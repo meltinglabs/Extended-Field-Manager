@@ -55,7 +55,11 @@ class Managepanels extends PosttypesManager {
 	}
 	
 	public function setAssignedPanels(){	
-		$this->assigned = $this->db->get_row( $this->db->prepare( "SELECT * FROM ". EFM_DB_OWNER ." WHERE owner='posttype' AND slug='". $this->posttype->name ."'" ) );
+		$this->assigned = $this->db->get_row( $this->db->prepare( "SELECT * 
+			FROM ". EFM_DB_OWNER ." 
+			WHERE owner_type='posttype' 
+			AND slug='". $this->posttype->name ."'" 
+		));
 		$this->assignedPanels = array();
 		if( !empty( $this->assigned ) ){
 			$panels = $this->db->get_results( $this->db->prepare(
@@ -188,7 +192,7 @@ class Managepanels extends PosttypesManager {
 	public function save( $data ){		
 		if( empty( $this->assigned ) ){
 			$new = array();
-			$new['owner'] = 'posttype';
+			$new['owner_type'] = 'posttype';
 			$new['slug'] = $this->posttype->name;
 			$new['built_in'] = $this->posttype->_builtin;
 			if( !$new['built_in'] ){
@@ -204,10 +208,11 @@ class Managepanels extends PosttypesManager {
 		}
 		
 		if( !empty( $data ) && !empty( $this->assigned ) || !empty( $data ) && isset( $owner ) ){
+			$owner_id = !empty( $this->assigned ) ? $this->assigned->id : $owner;
 			foreach( $data['panels'] as $key => $value ){
 				$row = array();
 				$row['field_order'] = $key;
-				$row['owner_id'] = $this->assigned->id;
+				$row['owner_id'] = $owner_id;
 				$row['panel_id'] = $value;
 				$this->db->insert( EFM_DB_APL, $row );
 			}

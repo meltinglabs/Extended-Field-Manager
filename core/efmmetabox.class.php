@@ -2,29 +2,6 @@
 /**
  * EFMMetabox
  *
- * Copyright 2006-2012 by lossendae.
- *
- * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 2 of the License, or (at your option) any later
- * version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
- * details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 59 Temple
- * Place, Suite 330, Boston, MA 02111-1307 USA
- *
- * @package efm
- */
-/**
- * EFMMetabox
- * 
- * Metabox Manager 
- *
  * @package efm
  * @subpackage core
  */
@@ -38,100 +15,71 @@ class EFMMetabox {
 		global $wpdb;
 		$this->db = &$wpdb;
 		$this->panel = $panel;
-		add_action( 'save_post', array( &$this, 'save_post' ), 1, 2 );	
+		
+		/*** Attach the save action for the current metabox ***/
+		add_action( 'save_post', array( &$this, 'savePost' ), 1, 2 );	
+		
+		/*** Register the metabox ***/
 		$this->register( $panel );
 	}
 	
-	public function save_post( $post_id, $post ){
-		if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE || wp_is_post_revision( $post ) ) return $post_id;
-		
-		if ( $post->post_type == 'page' ) {
-			if ( !current_user_can( 'edit_page', $post_id ) ) return $post_id;
-		} else {
-			if ( !current_user_can( 'edit_post', $post_id ) ) return $post_id;
-		}
-		
-		if ( !wp_verify_nonce( $_POST['efm_metabox_'. $this->panel['id']], __FILE__ ) ) return $post_id;
-		
-		$fields = $this->getFields( true );
-		foreach($fields as $field){
-			$value = $_POST[$field->field_id];
-			if( empty( $value ) || $value == "" ){
-				delete_post_meta( $post_id, $field->field_id );
-			} else {				
-				update_post_meta( $post_id, $field->field_id, $value);
-			}			
-		}
-		$this->updateMetaKeys( $post_id );
-	}
-	
-	public function updateMetaKeys( $post_id ){
-		$meta = $this->db->get_var( $this->db->prepare(
-			'SELECT GROUP_CONCAT(meta_id) AS ids
-			  FROM '. $this->db->postmeta .'
-			  WHERE meta_key LIKE "%s"
-			  AND post_id = %d',
-			$this->panel['name'].'_%', $post_id
-		));
-		
-		$data = array(
-			'panel_id' => $this->panel['id'],
-			'post_id' => $post_id,
-			'meta_keys' => $meta,			
-		);
-		
-		$exist = $this->db->get_var('SELECT panel_id FROM '. EFM_DB_META_GROUP .' WHERE panel_id ='. $this->panel['id'] .' AND post_id ='. $post_id );
-		if( !empty( $exist ) ){
-			$this->db->update( 
-				EFM_DB_META_GROUP, 
-				$data, 
-				array( 'panel_id' => $data['panel_id'], 'post_id' => $data['post_id'] ),
-				array( '%d', '%d', '%s'),
-				array( '%d', '%d' )
-			);
-		} else {
-			$this->db->insert( EFM_DB_META_GROUP, $data );
-		}		
-	}
-	
-	public function getMetaValues( $post ){
-		$metaKeys = $this->db->get_var($this->db->prepare(
+	/**
+     * getMetaValues.
+     *
+     * Get the current metabox existing value
+     *
+	 * @param object $post - The post object
+	 * @access public
+     */	
+	public function getMetaValues( $post ){			
+		$metas = $this->db->get_results( $this->db->prepare(
 			'SELECT 
-			  meta_keys 
+				REPLACE(m.`meta_key`, %s, "") AS meta_key,
+				m.`meta_value`
 			FROM
-			  '. EFM_DB_META_GROUP .' 
-			WHERE panel_id = %d 
-			  AND post_id = %d', 
-			$this->panel['id'], $post->ID 
+				'. $this->db->postmeta .' m
+				LEFT JOIN '. EFM_DB_METAS .'  efm
+					ON efm.`meta_id` = m.`meta_id`
+			WHERE m.`post_id` = %d
+				AND efm.`field_id` IS NOT NULL',
+			$this->panel['name'] .'_', $post->ID
 		));
-		
-		if ( !empty( $metaKeys ) ){
-			$fields = $this->db->get_results( $this->db->prepare(
-				'SELECT REPLACE(meta_key, %s , "") AS meta_key,
-				  meta_value 
-				FROM
-				  '. $this->db->postmeta .' 
-				WHERE meta_id IN ('. $metaKeys .')',
-				$this->panel['name'] .'_'
-			));
-			
-			foreach( $fields as $value ){
+		if( !empty( $metas) ){
+			foreach( $metas as $value ){
 				$this->meta[$value->meta_key] = $value->meta_value;
-			}	
+			}
 		}			
 	}
 	
-	public function register( $metabox, $context = 'normal', $prority = 'default' ){
-		add_meta_box(
-			$metabox['name'] .'_new',
-			$metabox['title'] .' New class method',
-			array( &$this , 'renderFields' ),
-			$metabox['slug'],
-			$context,
-			$priority
-		);
+	/**
+     * getFields.
+     *
+     * Get the csutom field list for the current metabox
+     *
+	 * @access public
+	 * @return object $fields - The metabox assigend fields
+     */
+	public function getFields(){	
+		$select = '*, CONCAT( "'. $this->panel['name'] .'", "_", name ) AS field_id';		
+		$fields = $this->db->get_results( $this->db->prepare(
+			'SELECT '. $select .' 
+			FROM wp_efm_fields 
+			WHERE owner_type = "panel" 
+			AND owner_id = %d
+			ORDER BY display_order',
+			$this->panel['id']
+		));
+		return $fields;
 	}
 	
+	/**
+     * renderFields.
+     *
+     * Render fields in the metabox
+     *
+	 * @param object $post - The post object
+	 * @access public
+     */	
 	public function renderFields( $post ){
 		$this->getMetaValues( $post );		
 		$fields = $this->getFields();
@@ -147,26 +95,129 @@ class EFMMetabox {
 		/* end metabox with nonce and close the wrapper */
 		echo '<input type="hidden" name="efm_metabox_'. $this->panel['id'] .'" value="' . wp_create_nonce(__FILE__) . '" /></div>';
 		
-		$meta = $this->db->get_var( $this->db->prepare(
-			'SELECT GROUP_CONCAT(meta_id) AS ids
-			FROM '. $this->db->postmeta .'
-			WHERE meta_key LIKE "%s"
-			AND post_id = %d',
-			$this->panel['name'].'_%', 1
-		));
+		/*** debug ***/
 		// $this->db->show_errors();
-		// $this->db->print_error();
+		// $this->db->print_error();	
+	}			
+	
+	/**
+     * register.
+     *
+     * Register a metabox for this instance
+     *
+	 * @param array $metabox - The panel information
+	 * @param string $context - The metabox context - default : normal
+	 * @param string $prority - The metabox prority - default : default
+	 * @access public
+     */	
+	public function register( $metabox, $context = 'normal', $prority = 'default' ){
+		add_meta_box(
+			$metabox['name'],
+			$metabox['title'],
+			array( &$this , 'renderFields' ),
+			$metabox['slug'],
+			$context,
+			$priority
+		);
 	}
 	
-	public function getFields( $returnName = false ){	
-		$select = $returnName ? 'CONCAT( "'. $this->panel['name'] .'", "_", name ) AS field_id' : '*, CONCAT( "'. $this->panel['name'] .'", "_", name ) AS field_id';		
-		$fields = $this->db->get_results( $this->db->prepare(
-			'SELECT '. $select .' 
-			FROM wp_efm_fields 
-			WHERE owner = "panel" 
-			AND owner_id = '. $this->panel['id'] .' 
-			ORDER BY display_order'
+	/**
+     * deletePostMeta.
+     *
+     * Delete the specified meta from both native wp meta table and efm specific table if the row exist
+     *
+	 * @param integer $post_id - The post id
+	 * @param object $field - The current field object
+	 * @access public
+     */
+	public function deletePostMeta( $post_id, $field ){
+		delete_post_meta( $post_id, $field->field_id );
+		$exist = $this->db->get_var(
+			'SELECT meta_id 
+			FROM '. EFM_DB_METAS .' 
+				WHERE post_id ='. $post_id .'
+				AND field_id ='. $field->id 
+		);
+		if( !empty( $exist ) ){
+			$this->db->query('DELETE FROM '. EFM_DB_METAS .' WHERE meta_id = '. $exist);
+		}
+	}
+	
+	/**
+     * deletePostMeta.
+     *
+     * Create/Upadte the specified meta from both native wp meta table and efm specific table
+     *
+	 * @param integer $post_id - The post id
+	 * @param object $field - The current field object
+	 * @param mixed $value - The current field meta value
+	 * @access public
+     */
+	public function updatePostMeta( $post_id, $field, $value ){
+		update_post_meta( $post_id, $field->field_id, $value);
+				
+		$meta = $this->db->get_var( $this->db->prepare(
+			'SELECT meta_id
+			  FROM '. $this->db->postmeta .'
+			  WHERE meta_key = "%s"
+			  AND post_id = %d',
+			$field->field_id, $post_id
 		));
-		return $fields;
+		
+		$exist = $this->db->get_var(
+			'SELECT meta_id
+			FROM '. EFM_DB_METAS .' 
+				WHERE post_id ='. $post_id .'
+				AND field_id ='. $field->id 
+		);
+		
+		$data = array(
+			'panel_id' => $this->panel['id'],
+			'post_id' => $post_id,
+			'meta_id' => $meta,			
+			'field_id' => $field->id,			
+		);
+		if( !empty( $exist ) ){
+			$this->db->update( 
+				EFM_DB_METAS, 
+				$data, 
+				array( 'meta_id' => $data['meta_id'] ),
+				array( '%d', '%d', '%d', '%d' ),
+				array( '%d' )
+			);
+		} else {
+			$this->db->insert( EFM_DB_METAS, $data );
+		}	
+	}	
+	
+	/**
+     * savePost.
+     *
+     * Save post hook for the current metabox
+     *
+	 * @param integer $post_id - The post id
+	 * @param object $post - The post object
+	 * @access public
+     */	
+	public function savePost( $post_id, $post ){
+		if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE || wp_is_post_revision( $post ) ) return $post_id;
+		
+		if ( $post->post_type == 'page' ) {
+			if ( !current_user_can( 'edit_page', $post_id ) ) return $post_id;
+		} else {
+			if ( !current_user_can( 'edit_post', $post_id ) ) return $post_id;
+		}
+		
+		if ( !wp_verify_nonce( $_POST['efm_metabox_'. $this->panel['id']], __FILE__ ) ) return $post_id;
+		
+		$fields = $this->getFields();
+		foreach($fields as $field){
+			$value = $_POST[$field->field_id];
+			if( empty( $value ) || $value == "" ){
+				$this->deletePostMeta( $post_id, $field );
+			} else {				
+				$this->updatePostMeta( $post_id, $field, $value);
+			}			
+		}
 	}
 }

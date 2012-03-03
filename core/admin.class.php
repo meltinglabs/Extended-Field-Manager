@@ -1,6 +1,6 @@
 <?php 
 /**
- * PEFMAdminController
+ * EFMAdmin
  *
  * Copyright 2006-2012 by lossendae.
  *
@@ -22,12 +22,12 @@
  */
  
 /**
- * EFMAdminController
+ * EFMAdmin
  *
  * @package efm
  * @subpackage core
  */
-class EFMAdminController {
+class EFMAdmin {
 	public $page = null;
 	
 	/**
@@ -39,7 +39,7 @@ class EFMAdminController {
      */
     function __construct() {
 		/*** Load the metabox loader ***/
-		add_action('load-post.php', array( &$this, 'initialize' ));
+		add_action('load-post.php', array( &$this, 'loadMetaboxes' ));
 		
 		/*** Load the administration panel menus ***/
 		add_action('admin_menu', array( &$this, 'loadAdminMenu' ));		
@@ -54,7 +54,7 @@ class EFMAdminController {
 		add_action('wp_ajax_efmrequest', array( $this, 'handleAjaxRequest' ));
 	}
 	
-	public function initialize($test){
+	public function loadMetaboxes(){
 		global $wpdb;
 		
 		add_action( 'admin_print_styles-post.php', array( &$this, 'loadMetaboxAssets') );
@@ -69,7 +69,7 @@ class EFMAdminController {
 				p.title,
 				( SELECT GROUP_CONCAT(DISTINCT f.type) 
 				  FROM wp_efm_fields f 
-				  WHERE f.owner = "panel" 
+				  WHERE f.owner_type = "panel" 
 				  AND f.owner_id = p.id 
 				) AS fieldtypes
 			FROM
@@ -78,7 +78,7 @@ class EFMAdminController {
 					ON o.id = a.owner_id 
 				LEFT JOIN '. EFM_DB_PANELS .' p 
 					ON a.panel_id = p.id 
-				WHERE o.owner = "posttype"
+				WHERE o.owner_type = "posttype"
 				ORDER BY a.field_order'
 		), ARRAY_A);
 		

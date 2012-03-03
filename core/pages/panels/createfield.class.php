@@ -55,10 +55,10 @@ class CreateField extends PanelsManager {
 		/* Load available field list */
 		$this->fieldList = $this->controller->loadFields();
 		
-		$this->owner = $_GET['owner'];
+		$this->owner_type = $_GET['owner_type'];
 		$selfUrl = array(
 			'action' => 'createfield',
-			'owner' => $this->owner,
+			'owner_type' => $this->owner_type,
 			'id' => $_GET['id'],
 		);
 		
@@ -211,7 +211,7 @@ class CreateField extends PanelsManager {
 		$exist = $this->db->get_var( $this->db->prepare( 
 			"SELECT ". $field ." 
 			FROM ". EFM_DB_FIELDS ." f 
-			WHERE f.owner ='". $this->owner ."' 
+			WHERE f.owner_type ='". $this->owner_type ."' 
 			AND f.". $field ."  = '". $name ."' 
 			AND f.owner_id=". $this->panel->id
 		));
@@ -232,7 +232,7 @@ class CreateField extends PanelsManager {
 	}
 	
 	public function saveField(){
-		$lastFieldDisplayOrder = $this->db->get_var( $this->db->prepare( "SELECT MAX(f.display_order) FROM ". EFM_DB_FIELDS ." f WHERE f.owner='". $this->owner ."' AND f.owner_id=". $this->panel->id ) );
+		$lastFieldDisplayOrder = $this->db->get_var( $this->db->prepare( "SELECT MAX(f.display_order) FROM ". EFM_DB_FIELDS ." f WHERE f.owner_type='". $this->owner_type ."' AND f.owner_id=". $this->panel->id ) );
 		$this->fields['display_order'] = !empty($lastFieldDisplayOrder) ? $lastFieldDisplayOrder + 1 : 0;
 		$this->fields['options'] = serialize($this->fields['options']);
 		$this->db->insert(EFM_DB_FIELDS, $this->fields);
