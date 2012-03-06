@@ -112,23 +112,7 @@ class CreateField extends PanelsManager {
 					<textarea id="description" name="description"><?php echo $this->get('description'); ?></textarea>
 					<span class="description">Text to show under your field</span>
 				</div>
-				
-				<div class="form_block">
-					<label for="required">
-						<input type="checkbox" name="required" />
-						Required						
-					</label>
-					<span class="description">Check this if you want this field to must be filled</span>					
-				</div>
-				
-				<div class="form_block">
-					<label for="duplicable">
-						<input type="checkbox" name="duplicable" />
-						Can be duplicated						
-					</label>
-					<span class="description">Check this if you want this field to be duplicable</span>					
-				</div>
-				
+								
 				<p class="submit">
 					<a class="button" href="<?php echo $this->getUrl() ?>">Cancel</a>
 					<input type="submit" value="Save Field" class="button-primary" id="submit" name="submit">

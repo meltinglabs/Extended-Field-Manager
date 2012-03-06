@@ -102,7 +102,7 @@ class EFMInstaller {
 				KEY `field_id` (`field_id`),
 				KEY `panel_id` (`panel_id`),
 				KEY `post_id` (`post_id`),
-				KEY `meta_key` (`meta_id`)'
+				KEY `meta_key` (`meta_id`) )'
 			);
 		}
 		

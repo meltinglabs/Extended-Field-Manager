@@ -134,6 +134,7 @@ class EFMAdmin {
      */
 	public function loadMetaboxAssets(){		
 		echo '<link rel="stylesheet" href="'. EFM_CSS_URL . 'metabox.css" type="text/css" charset="utf-8" />';		
+		wp_enqueue_script( 'efm_metabox', EFM_JS_URL . 'efm_metabox.js', array(), false, true );		
 	}
 	
 	/*** debug ***/
@@ -234,6 +235,8 @@ class EFMAdmin {
 	 * @access public
      */
 	public function handleAjaxRequest(){
+		global $wpdb;
+		
 		$this->setIncludePaths('fields');
 		$name = $_POST['value'];
 		if( !$this->loadFields( $name ) ){
@@ -243,6 +246,14 @@ class EFMAdmin {
 
 		$className = ucfirst($name) .'Field';
 		$this->field = new $className();
+		if( $_POST['current_field'] !== 0 ){
+			$options = $wpdb->get_var( $wpdb->prepare(
+				"SELECT options FROM ". EFM_DB_FIELDS ." WHERE id = %u"
+				,$_POST['current_field'] 
+			));
+			if( !empty( $options ) )
+				$this->field->setOptions( $options );
+		}
 		echo $this->field->getSetupOtions();	
 		die();
 	}
@@ -274,7 +285,7 @@ class EFMAdmin {
 	 * @access public
 	 * @return string The processed content || && error message if any
      */
-	public function loadPage($render = true){		
+	public function loadPage($render = 'page'){		
 		$requestedPage = (string) $_GET['page'];
 		$this->classFilename = str_replace( EFM_PREFIX, '', $requestedPage );
 		$className = ucfirst( $this->classFilename ) . 'Manager';

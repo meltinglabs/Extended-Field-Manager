@@ -39,6 +39,30 @@
     padding: 8px;
     width: 50%;
 }
+.efm_metabox .form_block select {
+	padding: 0;
+}
 .efm_metabox .form_block textarea{
 	width: 100%;
 }
+.duplicable .efm_box{ margin: 0; }
+.duplicable .efm_box li{ margin: 2px 0 0; }
+.duplicable .remove,
+.duplicable .add{
+	-moz-border-radius: 3px 3px 3px 3px;
+	-webkit-border-radius: 3px 3px 3px 3px;
+	border-radius: 3px 3px 3px 3px;    
+    margin-left: 2px;
+    padding: 8px;
+}
+.duplicable .add span,
+.duplicable .remove span{
+	background: url("../images/remove.png") no-repeat scroll left center transparent;  
+	display: inline-block;
+    height: 16px;
+    padding-left: 22px;
+}
+.duplicable .add span{
+	background-image: url("../images/add.png");    
+}
+.duplicable .single .remove{ display: none; }

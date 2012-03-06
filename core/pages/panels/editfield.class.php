@@ -76,6 +76,7 @@ class EditField extends PanelsManager {
 		?>
 			<form id="panel-menu-settings" action="<?php echo $this->getUrl( $selfUrl ) ?>" method="post">
 				<input name="owner_id" type="hidden" value="<?php echo $this->get('owner_id'); ?>"/>
+				<input id="current_field_id" type="hidden" value="<?php echo $this->get('id'); ?>"/>
 				<?php $this->getLeftSide() ?>						
 				<?php $this->getRightSide() ?>						
 			</form>
@@ -113,23 +114,7 @@ class EditField extends PanelsManager {
 					<textarea id="description" name="description"><?php echo $this->get('description'); ?></textarea>
 					<span class="description">Text to show under your field</span>
 				</div>
-				
-				<div class="form_block">
-					<label for="required">
-						<input type="checkbox" name="required" />
-						Required						
-					</label>
-					<span class="description">Check this if you want this field to must be filled</span>					
-				</div>
-				
-				<div class="form_block">
-					<label for="duplicable">
-						<input type="checkbox" name="duplicable" />
-						Can be duplicated						
-					</label>
-					<span class="description">Check this if you want this field to be duplicable</span>					
-				</div>
-				
+								
 				<p class="submit">
 					<a class="button" href="<?php echo $this->getUrl(); ?>">Cancel</a>
 					<a class="button" href="<?php echo $this->getUrl( array( 'action' => 'editpanel', 'id' => $this->get('owner_id') ) ); ?>">Back to Panel</a>
@@ -277,11 +262,23 @@ class EditField extends PanelsManager {
 		return $object;
 	}
 	
+	public function sanitizeArray( $data ){
+		/* Remove empty value from options */
+		if( is_array( $data ) ){
+			foreach( $data as $k => $v ){
+				if( is_array( $data[$k] ) ) $data[$k] = $this->sanitizeArray( $data[$k] );
+				if( $v == '' ) unset( $data[$k] );
+			}
+		}		
+		return $data;
+	}
+	
 	public function saveField(){
 		if( is_object( $this->field ) ){
 			$this->field = $this->toArray( $this->field );
-		}		
-		$this->field['options'] = serialize( $this->field['options'] );
+		}
+		$options = $this->sanitizeArray( $this->field['options'] );
+		$this->field['options'] = serialize( $options );
 		$this->db->update( EFM_DB_FIELDS, $this->field, array('id' => $this->get('id') ) );
 		// $this->db->show_errors();
 		// $this->db->print_error();

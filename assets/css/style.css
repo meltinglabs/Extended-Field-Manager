@@ -63,7 +63,13 @@ div.form_block input[type="email"],
 div.form_block input[type="number"], 
 div.form_block input[type="tel"], 
 div.form_block input[type="url"], 
-div.form_block select { width: 100%; }
+div.form_block select { 
+	width: 100%; 
+	padding: 8px;
+}
+div.form_block select {
+	padding: 0;
+}
 
 /*** Drag & Drop ***/
 ul.field{ 
@@ -144,6 +150,40 @@ ul.sortable .highlight-drop{
 
 /* Field */
 .field_display_preview{ margin-top: 18px; }
+
+/* Duplicable */
+.duplicable .efm_box{ margin: 0; }
+.duplicable .efm_box li{ margin: 2px 0 0; }
+.duplicable .remove,
+.duplicable .add{
+	-moz-border-radius: 3px 3px 3px 3px;
+	-webkit-border-radius: 3px 3px 3px 3px;
+	border-radius: 3px 3px 3px 3px;    
+    margin-left: 2px;
+    padding: 8px;
+}
+.duplicable .add span,
+.duplicable .remove span{
+	background: url("../images/remove.png") no-repeat scroll left center transparent;  
+	display: inline-block;
+    height: 16px;
+	text-indent: -999em;
+    width: 16px;
+}
+.duplicable .add span{
+	background-image: url("../images/add.png");    
+}
+.duplicable .single .remove{ display: none; }
+.duplicable textarea,
+.duplicable input[type="text"], 
+.duplicable input[type="password"],  
+.duplicable input[type="email"], 
+.duplicable input[type="number"], 
+.duplicable input[type="tel"], 
+.duplicable input[type="url"], 
+.duplicable select { 
+    width: 30% !important;
+}
 
 /* Common */
 .centered{ text-align: center; }

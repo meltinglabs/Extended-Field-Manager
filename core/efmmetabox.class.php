@@ -48,7 +48,7 @@ class EFMMetabox {
 			foreach( $metas as $value ){
 				$this->meta[$value->meta_key] = $value->meta_value;
 			}
-		}			
+		}		
 	}
 	
 	/**
@@ -131,7 +131,10 @@ class EFMMetabox {
 	 * @access public
      */
 	public function deletePostMeta( $post_id, $field ){
+		/* Remove the current meta */
 		delete_post_meta( $post_id, $field->field_id );
+		
+		/* Then if the join reference exist delete it as well */
 		$exist = $this->db->get_var(
 			'SELECT meta_id 
 			FROM '. EFM_DB_METAS .' 
@@ -141,6 +144,17 @@ class EFMMetabox {
 		if( !empty( $exist ) ){
 			$this->db->query('DELETE FROM '. EFM_DB_METAS .' WHERE meta_id = '. $exist);
 		}
+	}
+		
+	public function sanitizeArray( $data ){
+		/* Remove empty value from options */
+		if( is_array( $data ) ){
+			foreach( $data as $k => $v ){
+				if( is_array( $data[$k] ) ) $data[$k] = $this->sanitizeArray( $data[$k] );
+				if( $v == '' ) unset( $data[$k] );
+			}
+		}		
+		return $data;
 	}
 	
 	/**
@@ -154,8 +168,13 @@ class EFMMetabox {
 	 * @access public
      */
 	public function updatePostMeta( $post_id, $field, $value ){
+		/* Remove empty value from meta */
+		$value = $this->sanitizeArray( $value );
+		
+		/* Update/Create meta key */
 		update_post_meta( $post_id, $field->field_id, $value);
-				
+		
+		/* Select all meta keys related to the current panel */
 		$meta = $this->db->get_var( $this->db->prepare(
 			'SELECT meta_id
 			  FROM '. $this->db->postmeta .'
@@ -164,6 +183,7 @@ class EFMMetabox {
 			$field->field_id, $post_id
 		));
 		
+		/* Select all meta keys that already have a joint entry from efm */
 		$exist = $this->db->get_var(
 			'SELECT meta_id
 			FROM '. EFM_DB_METAS .' 
@@ -171,12 +191,15 @@ class EFMMetabox {
 				AND field_id ='. $field->id 
 		);
 		
+		/* Prepare data */
 		$data = array(
 			'panel_id' => $this->panel['id'],
 			'post_id' => $post_id,
 			'meta_id' => $meta,			
 			'field_id' => $field->id,			
 		);
+		
+		/* Update/Create join table reference */
 		if( !empty( $exist ) ){
 			$this->db->update( 
 				EFM_DB_METAS, 

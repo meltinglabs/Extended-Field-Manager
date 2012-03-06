@@ -39,12 +39,21 @@ class TextField extends EFMField {
 			<div class="field_display_preview centered">
 				<img src="<?php echo EFM_URL . 'core/fields/text/preview.jpg' ?>" alt="Text field diplay preview"/>
 			</div>
+			
 			<div class="form_block">
-				<label for="field_default_value">
-					Default Value					
+				<label for="required">
+					<input type="checkbox" name="options[required]" <?php $required = $this->getOption('required'); !empty( $required ) AND print( ' checked="checked"' ); ?>/>
+					Required						
 				</label>
-				<input type="text" name="options[default_value]" id="field_default_value" value="<?php echo $this->getOption('default_value') ?>"/>	
-				<span class="description">Default value to instanciate the field with</span>					
+				<span class="description">Check this if you want this field to must be filled</span>					
+			</div>
+				
+			<div class="form_block">
+				<label for="duplicable">
+					<input type="checkbox" name="options[duplicable]" <?php $duplicable = $this->getOption('duplicable'); !empty( $duplicable ) AND print( ' checked="checked"' ); ?>/>
+					Duplicable						
+				</label>
+				<span class="description">Check this if you want this field to be duplicable</span>					
 			</div>
 		<?php
 		return ob_get_clean();
@@ -65,20 +74,52 @@ class TextField extends EFMField {
 	
 	public static function render( &$field, &$values ){
 		$options = unserialize( $field->options );
-		$value = array_key_exists( $field->name, $values ) ? $values[$field->name] : $options['default_value'];
-
+		$duplicable =  isset( $options['duplicable'] ) && $options['duplicable'] == 'on' ? true : false;
+		$value = array_key_exists( $field->name, $values ) ? $values[$field->name] : '';
+		$cls = $duplicable ? ' duplicable' : '';
 		ob_start();
 		?>
-			<div class="form_block">
-				<label for="<?php echo $field->field_id; ?>">
+			<div class="form_block<?php echo $cls; ?>">				
+				<label for="<?php echo $id; ?>">
 					<?php echo $field->label; ?>					
 				</label>
-				<input type="text" name="<?php echo $field->field_id; ?>" id="<?php echo $field->field_id; ?>" value="<?php echo $value; ?>"/>	
-				<?php if( !empty( $field->description ) ): ?>
+				
+				<?php 
+					/* The field is duplicable */
+					if( $duplicable ){
+						$value = $value == '' ? array() : unserialize( $value );
+						$i = 0;	$total = count($value);
+						echo $total == 1 ? '<ul class="efm_box single">' : '<ul class="efm_box">';						
+						/* Empty value, init field */
+						if( empty( $value ) ) {
+							echo self::renderMetaField( $field, '', true );
+						/* Or render each added fields with its value */
+						} else {									
+							foreach($value as $v){
+								echo self::renderMetaField( $field, $v, true, $i);								
+								$i++;
+							}
+						}
+						echo '</ul>';
+					/* Field is not duplicable */
+					} else {
+						echo self::renderMetaField( $field, $value );
+					}
+					
+				if( !empty( $field->description ) ): ?>
 					<span class="description"><?php echo $field->description; ?></span>
 				<?php endif; ?>
+				
 			</div>					
 		<?php
 		return ob_get_clean();
+	}
+	
+	public static function renderMetaField($field, $value, $duplicable = false, $index = 0){
+		$name = $duplicable ? $field->field_id .'[]': $field->field_id ;
+		$id = $index > 0 ? $field->field_id . '-' . $index: $field->field_id;	
+		$input = '<input type="text" name="'. $name .'" id="'. $id .'" value="'. $value .'"/>';		
+		if( $duplicable ){ $input = '<li>'. $input .'<a class="button remove" href=""><span>Remove</span></a><a class="button add" href=""><span>Add another</span></a></li>'; }
+		return $input;
 	}
 }

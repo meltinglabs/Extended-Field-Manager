@@ -122,8 +122,8 @@ class EFM {
 		if( !$this->selectedPanel && $this->debug ){
 			return "No panel selected, set the current panel by using the select method( your_panel_name ) before trying to retreive a field";
 		}
-		if( $this->selectedPanel &&  isset( $this->selectedPanel->fields{$key} ) ){
-			return $this->selectedPanel->fields{$key}->value;
+		if( $this->selectedPanel &&  isset( $this->selectedPanel->fields{$key} ) ){			
+			return $this->getValue( $this->selectedPanel->fields{$key}->value );
 		}
 		if( !isset( $this->selectedPanel->fields{$key} ) && $this->debug ){
 			return "There are no field named <strong>{$key}</strong> for the requested panel : <strong>{$this->selectedPanel->name}</strong>";
@@ -140,10 +140,19 @@ class EFM {
 	
 		if ( $name == 'get_' && isset( $this->panels{$panel} ) ) {
 			if( isset( $this->panels{$panel}->fields{$argument[0]} ) ){
-				return $this->panels{$panel}->fields{$argument[0]}->value;
+				return $this->getValue( $this->panels{$panel}->fields{$argument[0]}->value );
 			} 			
 		}
 		return false;
+	}
+	
+	public function getValue( $raw ){
+		$fromArray = @unserialize( $raw );
+		if( $raw === 'b:0;' || $fromArray !== false){
+			return $fromArray;
+		} else {
+			return $raw;
+		}
 	}
 			
 	/*** debug ***/
