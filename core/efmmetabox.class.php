@@ -55,8 +55,7 @@ class EFMMetabox {
 				$data = @unserialize( $value->meta_value );
 				$this->meta[$value->meta_key] = ( $options === 'b:0;' || $data !== false) ? $data : $value->meta_value;
 			}
-		}
-		$this->controller->setDebug('getMetaValues', 'Get the current metabox existing value', $this->db->last_query);		
+		}	
 	}
 	
 	/**
@@ -123,8 +122,6 @@ class EFMMetabox {
 		/*** debug ***/
 		// $this->db->show_errors();
 		// $this->db->print_error();	
-
-		// echo '<pre>'. print_r( $this->controller->getDebug(), true ) .'</pre>';
 	}			
 	
 	/**
@@ -187,7 +184,7 @@ class EFMMetabox {
 	/**
      * deletePostMeta.
      *
-     * Create/Upadte the specified meta from both native wp meta table and efm specific table
+     * Create/Update the specified meta from both native wp meta table and efm specific table
      *
 	 * @param integer $post_id - The post id
 	 * @param object $field - The current field object
@@ -200,7 +197,6 @@ class EFMMetabox {
 		
 		/* Update/Create meta key */
 		update_post_meta( $post_id, $field->field_id, $value);
-		$_POST['debugQueries']['updatePostMeta'][]['update_post_meta'] = $this->db->last_query;
 		
 		/* Try to retreive the meta id for the current field */
 		$meta = $this->db->get_var( $this->db->prepare(
@@ -210,7 +206,6 @@ class EFMMetabox {
 			  AND post_id = %d',
 			$field->field_id, $post_id
 		));		
-		$_POST['debugQueries']['updatePostMeta'][]['Try to retreive the meta id for the current field'] = $this->db->last_query;
 		
 		/* Verify if the meta ID already has a join reference */
 		$exist = $this->db->get_var( $this->db->prepare(
@@ -219,9 +214,7 @@ class EFMMetabox {
 				WHERE post_id =%d
 				AND field_id =%d', 
 			$post_id, $field->id 
-		));		
-		$_POST['debugQueries']['updatePostMeta'][]['Verify if the meta ID already has a join reference'] = $this->db->last_query;
-			
+		));					
 		
 		/* Prepare data */
 		$data = array(
@@ -243,7 +236,6 @@ class EFMMetabox {
 		} else {
 			$this->db->insert( EFM_DB_METAS, $data );
 		}
-		$_POST['debugQueries']['updatePostMeta'][]['Update/Create join table reference'] = $this->db->last_query;
 	}	
 	
 	/**
@@ -254,6 +246,7 @@ class EFMMetabox {
 	 * @param integer $post_id - The post id
 	 * @param object $post - The post object
 	 * @access public
+	 * @return integer $post_id - Allowing other plugin to continue upon the save_post hook
      */	
 	public function savePost( $post_id, $post ){
 		if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE || wp_is_post_revision( $post ) ) return $post_id;
@@ -262,8 +255,7 @@ class EFMMetabox {
 			if ( !current_user_can( 'edit_page', $post_id ) ) return $post_id;
 		} else {
 			if ( !current_user_can( 'edit_post', $post_id ) ) return $post_id;
-		}
-		
+		}		
 		if ( !wp_verify_nonce( $_POST['efm_metabox_'. $this->panel['id']], __FILE__ ) ) return $post_id;
 		
 		$fields = $this->getFields();
@@ -275,6 +267,6 @@ class EFMMetabox {
 				$this->updatePostMeta( $post_id, $field, $value);
 			}			
 		}
-		$this->controller->setDebug('savePost', 'Test', $this->db->last_query);
+		return $post_id;
 	}
 }

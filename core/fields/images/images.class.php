@@ -101,7 +101,7 @@ class ImagesField extends EFMField {
 			'multipart_params' => array(
 				'field_type' => 'images',
 				'action' => 'efmrequest',
-				'task' => 'upload',
+				'task' => 'upload_file',
 				'image_id' => $field->field_id,
 				'_ajax_nonce' => wp_create_nonce( $field->field_id .'_efm_upload' ),
 			),
@@ -174,6 +174,7 @@ class ImagesField extends EFMField {
 			/* @TODO - Remove the meta_box as well, i should pass more informations one way or another */
 			if( $data['post'] && $data['meta'] ){
 				$metaValues = get_post_meta( $data['post'], $data['meta'] );				
+				/* The metabox is a multiple file */
 				if( !empty( $metaValues ) && is_array( $metaValues ) ){
 					$key = array_search( $data['to_remove'], $metaValues[0] );
 					if( $key !== false ){
@@ -187,6 +188,7 @@ class ImagesField extends EFMField {
 						}
 					}					
 				}
+				/* The metabox is a single file */
 				if( !empty( $metaValues ) && !is_array( $metaValues ) && $metaValues == $data['to_remove'] ){
 					delete_post_meta( $data['post'], $data['meta'] );
 				}
@@ -197,15 +199,14 @@ class ImagesField extends EFMField {
 	}
 	
 	public function uploadFile( $data ){
-		// check ajax noonce
-		$image_id = $data["image_id"];
-		
+		/* check ajax nonce */
+		$image_id = $data["image_id"];		
 		check_ajax_referer( $image_id . '_efm_upload' );
 	
-		// handle file upload
+		/* handle file upload */
 		$status = wp_handle_upload( $_FILES[$image_id . '_efm_fdn'], array('test_form' => false, 'action' => 'plupload_action') );
 		
-		// send the uploaded file url in response
+		/* send the uploaded file url in response */
 		if( !array_key_exists( 'error', $status )  ){
 			$status['fieldname'] = $image_id;
 		}

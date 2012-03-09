@@ -58,6 +58,7 @@ class EFMAdmin {
 	public function loadMetaboxes(){
 		global $wpdb;
 		
+		/* Get all panels to add as metabox */
 		$metaboxes = $wpdb->get_results( $wpdb->prepare(
 			'SELECT 
 				o.slug,
@@ -79,9 +80,6 @@ class EFMAdmin {
 				ORDER BY a.field_order'
 		), ARRAY_A);
 		
-		// $wpdb->show_errors();
-		// $wpdb->print_error();
-		
 		if( !empty( $metaboxes ) ){
 			/* Load the metabox class handler and the field abstract class */
 			include_once 'efmmetabox.class.php';
@@ -90,7 +88,6 @@ class EFMAdmin {
 			$i = 0;	
 		
 			/*** debug ***/
-			// echo '<br/><br/>';
 			// $tstart = $this->getMicrotime();	
 			
 			foreach( $metaboxes as $metabox ){	
@@ -102,7 +99,7 @@ class EFMAdmin {
 						$loaded[] = $field;
 					}					
 				} else {
-					/* Following metabox, only load unloaded fields */
+					/* Following metabox, only load unloaded field classes */
 					foreach( $fields as $field ){
 						if( !in_array( $field, $loaded ) ){
 							include EFM_FIELDS_PATH . DIRECTORY_SEPARATOR . $field . DIRECTORY_SEPARATOR . $field . '.class.php';
@@ -110,7 +107,6 @@ class EFMAdmin {
 						}
 					}					
 				}
-				// EFMMetabox::init( $metabox );
 				$panel = new EFMMetabox( $metabox, $this );				
 				$i++;
 			}
@@ -124,16 +120,21 @@ class EFMAdmin {
 		
 		/* Load File uplaoder configs - This is ugly as hell */
 		add_action( 'admin_head', array( &$this, 'loadMetaboxConfig' ) );
-		// add_action('wp_ajax_plupload_action', array( &$this, 'handleUpload' ) );
 	}
 	
-	public function setDebug( $method, $description, $value ){
-		$this->debugInfos[$method][$description] = $value;
-	}
-	public function getDebug(){
-		return $this->debugInfos;
-	}
-	
+	/**
+     * loadAssets.
+     *
+     * Load CSS and JS for PLugin Management Pages
+     *
+	 * @access public
+     */
+	public function loadAssets(){		
+		echo '<link rel="stylesheet" href="'. EFM_CSS_URL . 'style.css" type="text/css" charset="utf-8" />';		
+		if( $this->loadPage('assets') ){
+			$this->page->loadAssets();
+		}
+	}	
 	
 	/**
      * loadAssets.
@@ -261,32 +262,6 @@ class EFMAdmin {
 		}
 		return false;
 	}
-		
-	// function uploadFile() {	 
-		// check ajax noonce
-		// $image_id = $_POST["image_id"];
-		
-		// check_ajax_referer( $image_id . '_efm_upload' );
-	
-		// handle file upload
-		// $status = wp_handle_upload( $_FILES[$image_id . '_efm_fdn'], array('test_form' => false, 'action' => 'plupload_action') );
-		
-		// send the uploaded file url in response
-		// if( !array_key_exists( 'error', $status )  ){
-			// $status['fieldname'] = $image_id;
-		// }
-		// return json_encode( $status );
-	// }
-	
-	// function removeFile( $data ){		
-		/* Remove files that were removed from upload */
-		// $uploads = wp_upload_dir();
-		// $toRemove = str_replace( $uploads['baseurl'], $uploads['basedir'], $data['to_remove'] );
-		// if( @unlink( $toRemove ) ){
-			// return true;
-		// }
-		// return false;
-	// }
 	
 	/**
      * handleAjaxRequest
@@ -299,13 +274,10 @@ class EFMAdmin {
 		$task = $_POST['task'];
 		
 		switch( $task ){
-			case 'upload':
+			case 'upload_file':
 				$this->getField();
 				echo $this->field->uploadFile( $_POST );
 				break;
-			// case 'remove_file':
-				// echo $this->removeFile( $_POST );
-				// break;
 			case 'remove_file':
 				$this->getField();
 				echo $this->field->removeFile( $_POST );
@@ -402,21 +374,7 @@ class EFMAdmin {
 				break;
 		}		
 	}	
-	
-	/**
-     * loadAssets.
-     *
-     * Load CSS and JS for PLugin Management Pages
-     *
-	 * @access public
-     */
-	public function loadAssets(){		
-		echo '<link rel="stylesheet" href="'. EFM_CSS_URL . 'style.css" type="text/css" charset="utf-8" />';		
-		if( $this->loadPage('assets') ){
-			$this->page->loadAssets();
-		}
-	}	
-	
+		
 	/*** debug ***/
 	public function getMicrotime(){
 		$mtime = microtime();
