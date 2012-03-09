@@ -129,11 +129,9 @@ class EFMInstaller {
 		}
 		add_action('admin_notices', array( &$this, 'showErrors' ) );
     }
-	public function showErrors(){
-		
-	}
-    public function deactivate() {}
-    public function uninstall() {}
+	public function showErrors(){}
+    public function deactivate(){}
+    public function uninstall(){}
 	
     /**
      * trigger_error()

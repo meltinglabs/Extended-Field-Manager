@@ -47,6 +47,8 @@
 }
 .duplicable .efm_box{ margin: 0; }
 .duplicable .efm_box li{ margin: 2px 0 0; }
+.efm_upload_btn .remove,
+.efm_upload_btn .add,
 .duplicable .remove,
 .duplicable .add{
 	-moz-border-radius: 3px 3px 3px 3px;
@@ -55,6 +57,8 @@
     margin-left: 2px;
     padding: 8px;
 }
+.efm_upload_btn .add span,
+.efm_upload_btn .remove span,
 .duplicable .add span,
 .duplicable .remove span{
 	background: url("../images/remove.png") no-repeat scroll left center transparent;  
@@ -62,7 +66,70 @@
     height: 16px;
     padding-left: 22px;
 }
+.efm_upload_btn .add span,
 .duplicable .add span{
 	background-image: url("../images/add.png");    
 }
 .duplicable .single .remove{ display: none; }
+
+/* File Upload */
+.filelist {
+    width: 60%;
+}
+.filelist .file {
+    padding: 5px;
+    background: #ececec;
+    border: solid 1px #ccc;
+    margin-bottom: 4px;
+}
+.filelist .fileprogress {
+    width: 0%;
+    background: #B7C53D;
+    height: 5px;
+}
+.plupload-thumbs {
+ 
+}
+.plupload-thumbs .thumb {
+    width: 50px;
+    padding-right: 5px;
+    float: left;
+}
+.plupload-thumbs .thumb img {
+    width: 50px;
+    height: 50px;
+}
+.ui-sortable  .thumb img {
+    cursor: pointer;
+}
+/* Image field */
+.efm_upload_btn{ padding: 10px 15px 15px 0; }
+.efm_image {}
+.efm_image li {
+	float: left;
+    margin-right: 15px;
+}
+.efm_image img {
+	background-color: #FFFFFF;
+    border: 1px solid #DADADA;
+    max-width: 120px;
+    padding: 10px 10px 30px;
+}
+.efm_image .remove,
+.efm_image .add{ position: absolute; }
+.efm_image .img_pw {
+	max-width: 144px;
+    position: relative;
+}
+.efm_image .img_pw .remove{ 
+	border-radius: 0 0 0 0;
+    bottom: 15px;
+    line-height: 1;
+    margin: 0 auto;
+    padding: 0;
+    right: 13px;
+    text-decoration: none;
+}
+.efm_image.multiple .img_pw img{
+	cursor: move;
+}

@@ -69,7 +69,6 @@ abstract class EFMField {
 		return $value;
 	}
 	
-	abstract public function getSetupOtions();	
-	abstract public function displayField();	
+	abstract public function getSetupOtions();		
 	abstract public static function getInfo( $key = null );
 }

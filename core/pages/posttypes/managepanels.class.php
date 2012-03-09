@@ -125,8 +125,8 @@ class Managepanels extends PosttypesManager {
 		<?php
 	}
 	
-	public function getPanelsList( $action = 'available' ){
-		$this->assignedList = '';
+	public function getPanelsList(){
+		$this->assignedList = array();
 		$list = '';
 		if( !empty( $this->panels ) ){
 			foreach($this->panels as $panel):
@@ -146,12 +146,14 @@ class Managepanels extends PosttypesManager {
 					</li>
 				<?php
 				if( in_array( $panel->id, $this->assignedPanels ) ){
-					$this->assignedList .= ob_get_clean();
+					$key = array_search( $panel->id, $this->assignedPanels );
+					$this->assignedList[$key] = ob_get_clean();
 				} else {
 					$list .= ob_get_clean();
 				}		
 			endforeach;
 		}
+		arsort( $this->assignedList );
 		return $list;
 	}
 	
@@ -176,7 +178,7 @@ class Managepanels extends PosttypesManager {
 								<input type="submit" value="Save Panels" class="button" id="submit" name="submit">	
 							</p>
 							<ul id="assigned" class="sortable field">
-								<?php echo $this->assignedList; ?>
+								<?php foreach($this->assignedList as $item){ echo $item; } ?>
 							</ul>
 						</div>
 						
@@ -189,8 +191,9 @@ class Managepanels extends PosttypesManager {
 	}
 	
 	
-	public function save( $data ){		
+	public function save( $data ){	
 		if( empty( $this->assigned ) ){
+			/* No db entry for the current post-type */
 			$new = array();
 			$new['owner_type'] = 'posttype';
 			$new['slug'] = $this->posttype->name;
@@ -204,22 +207,24 @@ class Managepanels extends PosttypesManager {
 				$owner = $this->db->insert_id;
 			}				
 		} else {
+			/* Remove all panel items for the current post-type */
 			$this->db->query( 'DELETE FROM '. EFM_DB_APL .' WHERE owner_id = '. $this->assigned->id);	
 		}
 		
 		if( !empty( $data ) && !empty( $this->assigned ) || !empty( $data ) && isset( $owner ) ){
-			$owner_id = !empty( $this->assigned ) ? $this->assigned->id : $owner;
+			$owner_id = !empty( $this->assigned ) ? $this->assigned->id : $owner;			
 			foreach( $data['panels'] as $key => $value ){
 				$row = array();
 				$row['field_order'] = $key;
 				$row['owner_id'] = $owner_id;
 				$row['panel_id'] = $value;
-				$this->db->insert( EFM_DB_APL, $row );
+				
+				/* Add all panel items for the current post-type */
+				$this->db->insert( EFM_DB_APL, $row );			
 			}
 			$message = isset( $owner ) ? 'New Panel assignement sucessfully saved' : 'Panel assignement successfully updated';
 			$this->setSuccessMessage( $message );
-		}
-			
+		}			
 		// $this->db->show_errors();
 		// $this->db->print_error();
 		if( $this->success ){

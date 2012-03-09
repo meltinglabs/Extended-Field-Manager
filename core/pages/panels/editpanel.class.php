@@ -68,7 +68,7 @@ class Editpanel extends PanelsManager {
 			
 		ob_start();
 		?>
-			<form id="panel-menu-settings" action="<?php echo $this->getUrl( array( 'action' => 'editpanel' ) ) ?>" method="post">
+			<form id="panel-menu-settings" action="<?php echo $this->getUrl( array( 'action' => 'editpanel', 'id' => $this->panel->id ) ) ?>" method="post">
 				<input name="id" type="hidden" value="<?php echo $this->panel->id; ?>"/>
 				<?php $this->getLeftSide() ?>						
 				<?php $this->getRightSide() ?>						
@@ -196,8 +196,20 @@ class Editpanel extends PanelsManager {
 	
 	public function save( $data ){
 		$id = $data['id'];
-		unset($data['id'], $data['submit']);
-		// $data['fields_order'] = serialize($data['fields_order']);
+		
+		/* Update display order for each fields */
+		foreach( $data['display_order'] as $order => $fieldID ){		
+			$this->db->update( 
+				EFM_DB_FIELDS, 
+				array('display_order' => $order), 
+				array( 'id' => $fieldID ),
+				array( '%d' ),
+				array( '%d' )
+			);
+		}	
+		unset($data['id'], $data['submit'], $data['display_order']);
+		
+		/* Update panel informations */
 		$this->db->update( 
 			EFM_DB_PANELS, 
 			$data, 

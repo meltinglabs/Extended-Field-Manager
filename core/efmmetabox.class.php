@@ -6,14 +6,17 @@
  * @subpackage core
  */
 class EFMMetabox {
+	public $controller = null;
 	public $db = null;
 	public $panel = null;
 	public $fields = array();
 	public $meta = array();
+	public $debugQueries = array();
 	
-	public function __construct( &$panel ){
+	public function __construct( &$panel, EFMAdmin &$admin ){
 		global $wpdb;
-		$this->db = &$wpdb;
+		$this->controller = &$admin;
+		$this->db = &$wpdb;		
 		$this->panel = $panel;
 		
 		/*** Attach the save action for the current metabox ***/
@@ -31,7 +34,8 @@ class EFMMetabox {
 	 * @param object $post - The post object
 	 * @access public
      */	
-	public function getMetaValues( $post ){			
+	public function getMetaValues( $post ){		
+		/* Get the current metabox existing value */
 		$metas = $this->db->get_results( $this->db->prepare(
 			'SELECT 
 				REPLACE(m.`meta_key`, %s, "") AS meta_key,
@@ -41,14 +45,35 @@ class EFMMetabox {
 				LEFT JOIN '. EFM_DB_METAS .'  efm
 					ON efm.`meta_id` = m.`meta_id`
 			WHERE m.`post_id` = %d
-				AND efm.`field_id` IS NOT NULL',
-			$this->panel['name'] .'_', $post->ID
+				AND efm.`field_id` IS NOT NULL
+				AND efm.`panel_id` = %d',
+			$this->panel['name'] .'_', $post->ID, $this->panel['id']
 		));
+		
 		if( !empty( $metas) ){
 			foreach( $metas as $value ){
-				$this->meta[$value->meta_key] = $value->meta_value;
+				$data = @unserialize( $value->meta_value );
+				$this->meta[$value->meta_key] = ( $options === 'b:0;' || $data !== false) ? $data : $value->meta_value;
 			}
-		}		
+		}
+		$this->controller->setDebug('getMetaValues', 'Get the current metabox existing value', $this->db->last_query);		
+	}
+	
+	/**
+     * setOptions
+     *
+     * Set the field custom options
+     *
+     * @param mixed string|array $data
+     * @return void
+     */
+	public function setOptions( $options ){
+		$data = @unserialize( $options );
+		if( $options === 'b:0;' || $data !== false){
+			$this->options = $data;
+		} else {
+			$this->options = $options;
+		}	
 	}
 	
 	/**
@@ -73,14 +98,14 @@ class EFMMetabox {
 	}
 	
 	/**
-     * renderFields.
+     * render.
      *
      * Render fields in the metabox
      *
 	 * @param object $post - The post object
 	 * @access public
      */	
-	public function renderFields( $post ){
+	public function render( $post ){
 		$this->getMetaValues( $post );		
 		$fields = $this->getFields();
 		
@@ -90,14 +115,16 @@ class EFMMetabox {
 		/* Render each field from their own class - MODx shadow is here too */
 		foreach( $fields as $field ){
 			$className = $field->type .'Field';
-			echo $className::render( $field, $this->meta );
+			echo $className::render( $field, $this->meta, $post );	
 		}
 		/* end metabox with nonce and close the wrapper */
-		echo '<input type="hidden" name="efm_metabox_'. $this->panel['id'] .'" value="' . wp_create_nonce(__FILE__) . '" /></div>';
+		echo '<input type="hidden" name="efm_metabox_'. $this->panel['id'] .'" value="' . wp_create_nonce(__FILE__) . '" /></div>';		
 		
 		/*** debug ***/
 		// $this->db->show_errors();
 		// $this->db->print_error();	
+
+		// echo '<pre>'. print_r( $this->controller->getDebug(), true ) .'</pre>';
 	}			
 	
 	/**
@@ -114,7 +141,7 @@ class EFMMetabox {
 		add_meta_box(
 			$metabox['name'],
 			$metabox['title'],
-			array( &$this , 'renderFields' ),
+			array( &$this , 'render' ),
 			$metabox['slug'],
 			$context,
 			$priority
@@ -167,29 +194,34 @@ class EFMMetabox {
 	 * @param mixed $value - The current field meta value
 	 * @access public
      */
-	public function updatePostMeta( $post_id, $field, $value ){
+	public function updatePostMeta( $post_id, $field, $value ){		
 		/* Remove empty value from meta */
 		$value = $this->sanitizeArray( $value );
 		
 		/* Update/Create meta key */
 		update_post_meta( $post_id, $field->field_id, $value);
+		$_POST['debugQueries']['updatePostMeta'][]['update_post_meta'] = $this->db->last_query;
 		
-		/* Select all meta keys related to the current panel */
+		/* Try to retreive the meta id for the current field */
 		$meta = $this->db->get_var( $this->db->prepare(
 			'SELECT meta_id
 			  FROM '. $this->db->postmeta .'
-			  WHERE meta_key = "%s"
+			  WHERE meta_key = %s
 			  AND post_id = %d',
 			$field->field_id, $post_id
-		));
+		));		
+		$_POST['debugQueries']['updatePostMeta'][]['Try to retreive the meta id for the current field'] = $this->db->last_query;
 		
-		/* Select all meta keys that already have a joint entry from efm */
-		$exist = $this->db->get_var(
+		/* Verify if the meta ID already has a join reference */
+		$exist = $this->db->get_var( $this->db->prepare(
 			'SELECT meta_id
 			FROM '. EFM_DB_METAS .' 
-				WHERE post_id ='. $post_id .'
-				AND field_id ='. $field->id 
-		);
+				WHERE post_id =%d
+				AND field_id =%d', 
+			$post_id, $field->id 
+		));		
+		$_POST['debugQueries']['updatePostMeta'][]['Verify if the meta ID already has a join reference'] = $this->db->last_query;
+			
 		
 		/* Prepare data */
 		$data = array(
@@ -210,7 +242,8 @@ class EFMMetabox {
 			);
 		} else {
 			$this->db->insert( EFM_DB_METAS, $data );
-		}	
+		}
+		$_POST['debugQueries']['updatePostMeta'][]['Update/Create join table reference'] = $this->db->last_query;
 	}	
 	
 	/**
@@ -242,5 +275,6 @@ class EFMMetabox {
 				$this->updatePostMeta( $post_id, $field, $value);
 			}			
 		}
+		$this->controller->setDebug('savePost', 'Test', $this->db->last_query);
 	}
 }
